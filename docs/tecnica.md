@@ -89,6 +89,13 @@ As fases seguintes adicionam migrations incrementais (grupos, clientes, imóveis
 - **Documentação**: `docs/funcional.md` e `docs/tecnica.md` são atualizados no mesmo commit de cada funcionalidade e publicados na rota `/docs`.
 - **Manual do usuário**: `src/lib/manual.ts` descreve cada tela (rota, passos, dicas); `scripts/gerar-manual.mjs` sobe o build e fotografa cada rota com Playwright em `public/manual/`. O job `manual` do CI regenera os prints a cada push na `main` e commita as mudanças (`[skip ci]`), que a Vercel publica — o manual em `/manual` sempre reflete o sistema no ar. Toda tela nova ganha sua entrada em `manual.ts` no mesmo commit.
 
+## Infraestrutura em produção
+
+- **Supabase**: projeto `mundo-novo` (ref `qyegfrctafjghgprnihl`), região São Paulo (`sa-east-1`). Migrations 0001–0003 aplicadas; carteira real carregada.
+- **Vercel**: projeto `mundo-novo` · produção em `https://mundo-novo-seven.vercel.app` (alias `mundo-novo-new-world2.vercel.app`). Env vars `NEXT_PUBLIC_SUPABASE_*` configuradas (production + preview).
+- **Autenticação ativa**: `/painel/*` exige login (redirecionamento no `proxy.ts`); `/docs` e `/manual` são públicos. Onboarding por convite: e-mail → `/definir-senha` (o cliente do navegador captura a sessão do link e chama `updateUser`); recuperação em `/recuperar-senha`. `site_url` e `uri_allow_list` configurados via Management API.
+- Deploy: `vercel deploy --prod --yes` (conexão Git para deploy automático pendente de instalação do app da Vercel no GitHub).
+
 ## Como rodar localmente
 
 ```bash
