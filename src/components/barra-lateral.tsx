@@ -29,8 +29,8 @@ type ItemNavegacao = {
 
 const visaoGeral: ItemNavegacao[] = [
   { rotulo: "Dashboard", href: "/painel", icone: LayoutDashboard, disponivel: true },
-  { rotulo: "Grupos", href: "/painel/grupos", icone: Building2 },
-  { rotulo: "Clientes", href: "/painel/clientes", icone: Users },
+  { rotulo: "Grupos", href: "/painel/grupos", icone: Building2, disponivel: true },
+  { rotulo: "Clientes", href: "/painel/clientes", icone: Users, disponivel: true },
   { rotulo: "Imóveis & Talhões", href: "/painel/imoveis", icone: Map },
   { rotulo: "Contratos", href: "/painel/contratos", icone: FileSignature },
   { rotulo: "Certificações", href: "/painel/workflow", icone: Workflow },

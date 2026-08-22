@@ -20,14 +20,14 @@ const fases: { nome: string; descricao: string; estado: EstadoFase }[] = [
   {
     nome: "Fase 0 — Fundação",
     descricao:
-      "Projeto no ar: identidade visual, login, painel, documentação interativa, testes e implantação contínua.",
-    estado: "em-andamento",
+      "Projeto no ar: identidade visual, login, painel, documentação interativa, manual do usuário, testes e implantação contínua.",
+    estado: "concluida",
   },
   {
     nome: "Fase 1 — Cadastros e permissões",
     descricao:
-      "Grupos, clientes, imóveis rurais (CAR, licenças, outorgas), talhões com histórico de safra e alçada de aprovação.",
-    estado: "planejada",
+      "Grupos, clientes, imóveis rurais (CAR, licenças, outorgas), talhões com histórico de safra e alçada de aprovação. Grupos e Clientes já disponíveis com a carteira real.",
+    estado: "em-andamento",
   },
   {
     nome: "Fase 2 — Certificações, contratos e workflow",

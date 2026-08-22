@@ -61,6 +61,17 @@ Migration `0001_fundacao.sql`:
 - trigger `handle_new_user` cria o perfil no primeiro login
 - RLS: usuário lê o próprio perfil; gestor/diretoria leem todos
 
+Migration `0002_carteira.sql` — hierarquia completa da carteira:
+
+- `grupos` (administração `mundo_novo` | `terceiro`)
+- `clientes` (tipo `fazenda` | `cadeia_suprimentos`; campo `fase` implementa a etapa de implantação), `contatos_cliente` (por área), `registros_contato`
+- `certificacoes` (entidade própria por cliente: norma RA/4C/Orgânico, vencimento, flag `principal`, `verificada_pelo_robo_em`)
+- `imoveis_rurais` + `documentos_imovel` (CAR, matrícula, licença, ITR, georreferenciamento, averbação) + `captacoes_agua` (outorgas)
+- `talhoes` + `safras` + `talhao_safras` (histórico por safra: previsão × colheita efetiva, estado da lavoura, poda/renovação)
+- RLS uniforme: equipe autenticada e ativa (`eh_equipe_ativa()`) lê e escreve; papéis finos virão com os módulos
+
+Camada de dados: `src/lib/carteira/` — `tipos.ts` (domínio), `dados-demo.ts` (carteira real usada no modo demonstração e futura carga inicial do banco), `consultas.ts` (interface única que hoje serve os dados demo e passará a consultar o Supabase sem mudar as telas).
+
 As fases seguintes adicionam migrations incrementais (grupos, clientes, imóveis, talhões, safras, certificações, checklists, visitas, NCs/CAPAs, colaboradores, treinamentos, alertas).
 
 ## Regras de negócio codificadas

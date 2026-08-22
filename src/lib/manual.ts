@@ -53,6 +53,35 @@ export const TELAS_MANUAL: TelaManual[] = [
     ],
   },
   {
+    id: "grupos",
+    titulo: "Grupos",
+    rota: "/painel/grupos",
+    resumo:
+      "Estrutura da carteira: grupos administrados pela Mundo Novo, grupos de terceiros (como a Expocaccer) e clientes diretos.",
+    passos: [
+      "No menu lateral, clique em Grupos.",
+      "Cada cartão mostra quantos clientes o grupo tem e a conformidade média.",
+      "Grupos com a etiqueta “Grupo externo” são administrados por terceiros — a Mundo Novo executa a consultoria.",
+      "Use o link “Ver todos os clientes” para ir direto à lista completa.",
+    ],
+  },
+  {
+    id: "clientes",
+    titulo: "Clientes",
+    rota: "/painel/clientes",
+    resumo:
+      "Lista das fazendas e cadeias de suprimento da carteira, com certificações, conformidade e prazo de vencimento.",
+    passos: [
+      "No menu lateral, clique em Clientes.",
+      "Cada linha mostra o tipo (Fazenda ou Cadeia de Suprimentos), o grupo, as certificações e o vencimento da certificação principal.",
+      "As cores do vencimento seguem o padrão do sistema: vermelho = crítico (30 dias ou menos), laranja = atenção (até 120 dias).",
+      "Clique em um cliente para abrir a ficha completa, com contatos por área e imóveis rurais.",
+    ],
+    dicas: [
+      "Na ficha do cliente, a tabela de imóveis mostra CAR, matrícula e quais imóveis têm captação de água.",
+    ],
+  },
+  {
     id: "docs",
     titulo: "Documentação do produto",
     rota: "/docs",

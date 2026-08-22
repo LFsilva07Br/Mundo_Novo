@@ -33,6 +33,10 @@ São duas experiências sobre a mesma base de dados:
 | Painel base | Estrutura de navegação com todos os módulos do sistema |
 | Documentação viva | Esta documentação, atualizada a cada alteração |
 | Manual do usuário | Guia de uso tela a tela em `/manual`, com imagens reais do sistema regeneradas automaticamente a cada nova versão publicada |
+| **Grupos** | Estrutura da carteira: Grupo Alta Mogiana e Grupo Cerrado Mineiro (administrados pela Mundo Novo), Expocaccer (grupo externo) e clientes diretos, com contagem de clientes e conformidade média |
+| **Clientes** | Carteira real com 8 clientes — fazendas e cadeias de suprimento — com certificações (RA, 4C, Orgânico), conformidade, vencimento em cores e ficha completa com contatos por área e imóveis rurais (CAR, matrícula, áreas e captação de água da planilha de controle ambiental) |
+
+> **Modo demonstração:** enquanto o banco de dados não é conectado, Grupos e Clientes exibem a carteira real em modo somente leitura. O cadastro e a edição chegam junto com a conexão do banco.
 
 ### 🔜 Fase 1 — Cadastros e permissões
 
