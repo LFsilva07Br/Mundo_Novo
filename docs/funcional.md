@@ -32,6 +32,7 @@ São duas experiências sobre a mesma base de dados:
 | Login | Entrada com e-mail e senha (biometria no app de campo virá na Fase 4) |
 | Painel base | Estrutura de navegação com todos os módulos do sistema |
 | Documentação viva | Esta documentação, atualizada a cada alteração |
+| Manual do usuário | Guia de uso tela a tela em `/manual`, com imagens reais do sistema regeneradas automaticamente a cada nova versão publicada |
 
 ### 🔜 Fase 1 — Cadastros e permissões
 

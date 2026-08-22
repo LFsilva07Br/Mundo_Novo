@@ -76,6 +76,7 @@ As fases seguintes adicionam migrations incrementais (grupos, clientes, imóveis
 - **Testes**: toda funcionalidade nasce com testes no mesmo commit (`*.test.ts[x]` ao lado do código). `npm test` roda tudo.
 - **CI**: GitHub Actions executa lint + testes + build a cada push. Nada quebrado chega à `main`.
 - **Documentação**: `docs/funcional.md` e `docs/tecnica.md` são atualizados no mesmo commit de cada funcionalidade e publicados na rota `/docs`.
+- **Manual do usuário**: `src/lib/manual.ts` descreve cada tela (rota, passos, dicas); `scripts/gerar-manual.mjs` sobe o build e fotografa cada rota com Playwright em `public/manual/`. O job `manual` do CI regenera os prints a cada push na `main` e commita as mudanças (`[skip ci]`), que a Vercel publica — o manual em `/manual` sempre reflete o sistema no ar. Toda tela nova ganha sua entrada em `manual.ts` no mesmo commit.
 
 ## Como rodar localmente
 

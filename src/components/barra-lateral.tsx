@@ -6,6 +6,7 @@ import {
   Bell,
   BookOpen,
   Building2,
+  CircleHelp,
   ClipboardCheck,
   FileSignature,
   Landmark,
@@ -119,6 +120,13 @@ export function BarraLateral({ emailUsuario }: { emailUsuario: string | null }) 
       </nav>
 
       <div className="mt-4 space-y-2 border-t border-sidebar-border pt-4">
+        <Link
+          href="/manual"
+          className="flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-semibold text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        >
+          <CircleHelp className="size-4" />
+          Manual do usuário
+        </Link>
         <Link
           href="/docs"
           className="flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-semibold text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"

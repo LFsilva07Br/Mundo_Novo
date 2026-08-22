@@ -28,3 +28,42 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  manual:
+    name: Atualizar manual do usuário
+    needs: qualidade
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Instalar navegador do Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Build
+        run: npm run build
+
+      - name: Gerar prints do manual
+        run: npm run manual
+
+      - name: Publicar prints atualizados
+        run: |
+          if [[ -n "$(git status --porcelain public/manual)" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add public/manual
+            git commit -m "docs: atualiza prints do manual do usuário [skip ci]"
+            git push
+          else
+            echo "Prints já estão atualizados."
+          fi
