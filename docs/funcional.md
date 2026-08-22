@@ -36,7 +36,19 @@ São duas experiências sobre a mesma base de dados:
 | **Grupos** | Estrutura da carteira: Grupo Alta Mogiana e Grupo Cerrado Mineiro (administrados pela Mundo Novo), Expocaccer (grupo externo) e clientes diretos, com contagem de clientes e conformidade média |
 | **Clientes** | Carteira real com 8 clientes — fazendas e cadeias de suprimento — com certificações (RA, 4C, Orgânico), conformidade, vencimento em cores e ficha completa com contatos por área e imóveis rurais (CAR, matrícula, áreas e captação de água da planilha de controle ambiental) |
 
-> **Modo demonstração:** enquanto o banco de dados não é conectado, Grupos e Clientes exibem a carteira real em modo somente leitura. O cadastro e a edição chegam junto com a conexão do banco.
+| **Dashboard** | Indicadores calculados da carteira (clientes, certificações, vencimentos em 90 dias, CAPAs, conformidade média) e certificados ordenados por vencimento |
+| **Imóveis & Talhões** | Talhões do Alto da Serra com ficha completa (plantas/ha, espaçamento, variedade, ano, estado da lavoura) e comparativo entre 5 safras (previsão × colheita efetiva) |
+| **Contratos & Alçada** | Fila de aprovação com seletor "ver como": sem alçada, os botões não aparecem; contrato parado >10 dias mostra escalonamento |
+| **Workflow (Certificações)** | Kanban com as 5 etapas reais e os 8 clientes distribuídos; notificação automática ao gestor em "Na certificadora" |
+| **CAPAs** | Planos de ação com severidade, responsável, prazo, origem Campo/Escritório e ranking de gaps |
+| **Social & Colaboradores** | Trabalhadores reais (função, CBO, salário, benefícios, adicionais, funções habilitadas), moradias com parentesco, treinamentos NR com vencimento calculado e exames por cargo |
+| **Editor de Checklist** | 10 itens reais da norma RA 1.4, cada um vinculado ao capítulo da norma, com exigências (foto mín., descrição mín.) que valem no app |
+| **Alertas & Automação** | Os dois motores lado a lado: régua de disparos por data (padrão validado 90/60/30/15/7) e gatilhos por evento |
+| **Visitas & Ações** | Registros de campo e de escritório com etiqueta de origem — inclui GPS/horário de início e fim no app |
+| **Relatórios** | Estimativa de safra por produtor, controle ambiental (composição de áreas) e conformidade por cliente |
+| **Usuários & Permissões** | Equipe real com papéis e o flag de alçada |
+
+> **Modo demonstração:** enquanto o banco de dados não é conectado, todas as telas exibem os dados reais das planilhas e do protótipo validado, em modo somente leitura. Cadastro, edição e movimentação chegam junto com a conexão do banco.
 
 ### 🔜 Fase 1 — Cadastros e permissões
 

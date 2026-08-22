@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CheckCircle2, CircleDashed, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { BadgeVencimento } from "@/components/badge-vencimento";
 import {
   Card,
   CardContent,
@@ -9,131 +9,179 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { listarClientes } from "@/lib/carteira/consultas";
+import { CAPAS_DEMO } from "@/lib/certificacao/dados-demo";
+import { ROTULO_NORMA } from "@/lib/carteira/tipos";
+import { diasAte, statusVencimento } from "@/lib/vencimentos";
 
 export const metadata: Metadata = {
   title: "Dashboard",
 };
 
-type EstadoFase = "concluida" | "em-andamento" | "planejada";
+export default async function PaginaDashboard() {
+  const clientes = await listarClientes();
 
-const fases: { nome: string; descricao: string; estado: EstadoFase }[] = [
-  {
-    nome: "Fase 0 — Fundação",
-    descricao:
-      "Projeto no ar: identidade visual, login, painel, documentação interativa, manual do usuário, testes e implantação contínua.",
-    estado: "concluida",
-  },
-  {
-    nome: "Fase 1 — Cadastros e permissões",
-    descricao:
-      "Grupos, clientes, imóveis rurais (CAR, licenças, outorgas), talhões com histórico de safra e alçada de aprovação. Grupos e Clientes já disponíveis com a carteira real.",
-    estado: "em-andamento",
-  },
-  {
-    nome: "Fase 2 — Certificações, contratos e workflow",
-    descricao:
-      "Certificações por cliente, contratos com alçada e Kanban das 5 etapas reais, incluindo etapa de implantação.",
-    estado: "planejada",
-  },
-  {
-    nome: "Fase 3 — Checklist, NC e CAPA",
-    descricao:
-      "Editor versionado vinculado à norma; NC nunca fica sem plano de ação.",
-    estado: "planejada",
-  },
-  {
-    nome: "Fase 4 — App do consultor (offline)",
-    descricao:
-      "PWA de campo com fotos, GPS, assinatura e fila de sincronização.",
-    estado: "planejada",
-  },
-  {
-    nome: "Fase 5 — Social & Colaboradores",
-    descricao:
-      "Trabalhadores, moradias, treinamentos (NRs) e exames com vencimentos.",
-    estado: "planejada",
-  },
-  {
-    nome: "Fase 6 — Automação e alertas",
-    descricao:
-      "Motores por data e por evento; alertas persistentes até a resolução.",
-    estado: "planejada",
-  },
-  {
-    nome: "Fase 7 — Relatórios",
-    descricao:
-      "Safra, ambiental, social e conformidade — exportação PDF/Excel.",
-    estado: "planejada",
-  },
-  {
-    nome: "Fase 8 — Robô ALAICE",
-    descricao:
-      "Verificação diária de vencimentos no site da certificadora.",
-    estado: "planejada",
-  },
-];
+  const certificacoes = clientes.flatMap((cliente) =>
+    cliente.certificacoes.map((cert) => ({ cliente, cert })),
+  );
+  const comVencimento = certificacoes
+    .filter((c) => c.cert.venceEm)
+    .sort(
+      (a, b) =>
+        new Date(a.cert.venceEm!).getTime() -
+        new Date(b.cert.venceEm!).getTime(),
+    );
 
-function IconeEstado({ estado }: { estado: EstadoFase }) {
-  if (estado === "concluida")
-    return <CheckCircle2 className="size-5 text-success" />;
-  if (estado === "em-andamento")
-    return <Loader2 className="size-5 animate-spin text-warning" />;
-  return <CircleDashed className="size-5 text-muted-foreground/50" />;
-}
+  const vencendo90 = comVencimento.filter(({ cert }) => {
+    const dias = diasAte(new Date(`${cert.venceEm}T12:00:00`));
+    return dias >= 0 && dias <= 90;
+  }).length;
+  const vencidos = comVencimento.filter(
+    ({ cert }) =>
+      statusVencimento(new Date(`${cert.venceEm}T12:00:00`)) === "vencido",
+  ).length;
 
-export default function PaginaDashboard() {
+  const conformidades = clientes
+    .map((c) => c.conformidade)
+    .filter((n): n is number => typeof n === "number");
+  const conformidadeMedia = Math.round(
+    conformidades.reduce((s, n) => s + n, 0) / conformidades.length,
+  );
+  const capasAbertas = CAPAS_DEMO.filter((c) => c.status !== "Fechada").length;
+
+  const indicadores = [
+    { rotulo: "Clientes ativos", valor: String(clientes.length), detalhe: "3 grupos + cliente direto" },
+    { rotulo: "Certificações", valor: String(certificacoes.length), detalhe: "RA · 4C · Orgânico" },
+    { rotulo: "Vencendo em 90 dias", valor: String(vencendo90), detalhe: vencidos > 0 ? `${vencidos} já vencida(s)` : "nenhuma vencida", alerta: vencendo90 > 0 || vencidos > 0 },
+    { rotulo: "CAPAs abertas", valor: String(capasAbertas), detalhe: "planos de ação ativos" },
+    { rotulo: "Conformidade média", valor: `${conformidadeMedia}%`, detalhe: "média da carteira", ok: true },
+  ];
+
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight">
-          Sistema em construção 🚧
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Acompanhe aqui o avanço de cada fase. A cada entrega, esta página dá
-          lugar ao dashboard de indicadores do protótipo aprovado.
-        </p>
+    <div className="mx-auto max-w-6xl space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-xs font-extrabold uppercase tracking-widest text-muted-foreground">
+            Visão geral
+          </p>
+          <h1 className="text-2xl font-extrabold tracking-tight">
+            Painel da carteira
+          </h1>
+        </div>
+        <Link
+          href="/painel/roadmap"
+          className="text-sm font-semibold text-primary underline underline-offset-2"
+        >
+          Roadmap de implantação →
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+        {indicadores.map((kpi) => (
+          <Card key={kpi.rotulo}>
+            <CardContent className="py-4">
+              <p
+                className={`text-2xl font-extrabold ${
+                  kpi.alerta ? "text-warning" : kpi.ok ? "text-success" : ""
+                }`}
+              >
+                {kpi.valor}
+              </p>
+              <p className="text-xs font-bold">{kpi.rotulo}</p>
+              <p className="text-[11px] text-muted-foreground">{kpi.detalhe}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Roadmap de implantação</CardTitle>
+          <CardTitle>Certificados por vencimento</CardTitle>
           <CardDescription>
-            Meta: sistema operacional para a Mundo Novo Café entre novembro e
-            dezembro de 2026 · proposta em 31 de outubro.
+            Ordenados pela proximidade do vencimento — os disparos de alerta
+            seguem a régua configurada em Alertas & Automação e persistem até a
+            resolução.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-4">
-            {fases.map((fase) => (
-              <li key={fase.nome} className="flex gap-3">
-                <IconeEstado estado={fase.estado} />
-                <div className="min-w-0">
-                  <p className="flex flex-wrap items-center gap-2 text-sm font-bold">
-                    {fase.nome}
-                    {fase.estado === "em-andamento" ? (
-                      <Badge variant="secondary">Em andamento</Badge>
-                    ) : null}
-                  </p>
-                  <p className="text-[13px] text-muted-foreground">
-                    {fase.descricao}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Certificação</TableHead>
+                <TableHead>Situação</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {comVencimento.map(({ cliente, cert }) => (
+                <TableRow key={`${cliente.id}-${cert.norma}`}>
+                  <TableCell>
+                    <Link
+                      href={`/painel/clientes/${cliente.id}`}
+                      className="font-semibold hover:text-primary"
+                    >
+                      {cliente.nome}
+                    </Link>
+                    <p className="text-xs text-muted-foreground">
+                      {cliente.regiao}
+                    </p>
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {ROTULO_NORMA[cert.norma]}
+                    {cert.certificadora ? ` (${cert.certificadora})` : null}
+                  </TableCell>
+                  <TableCell>
+                    <BadgeVencimento venceEm={cert.venceEm} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
-      <p className="text-center text-sm text-muted-foreground">
-        A especificação completa está na{" "}
-        <Link
-          href="/docs"
-          className="font-semibold text-primary underline underline-offset-2"
-        >
-          documentação interativa
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Link href="/painel/workflow" className="group">
+          <Card className="h-full transition-colors group-hover:border-primary/40">
+            <CardContent className="py-4">
+              <p className="font-bold">Workflow de certificação</p>
+              <p className="text-sm text-muted-foreground">
+                8 processos nas 5 etapas do ciclo
+              </p>
+            </CardContent>
+          </Card>
         </Link>
-        , atualizada a cada alteração do sistema.
-      </p>
+        <Link href="/painel/capas" className="group">
+          <Card className="h-full transition-colors group-hover:border-primary/40">
+            <CardContent className="py-4">
+              <p className="font-bold">CAPAs & indicadores</p>
+              <p className="text-sm text-muted-foreground">
+                {capasAbertas} planos em aberto · ranking de gaps
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/painel/social" className="group">
+          <Card className="h-full transition-colors group-hover:border-primary/40">
+            <CardContent className="py-4">
+              <p className="flex items-center gap-2 font-bold">
+                Social & Colaboradores <Badge variant="secondary">novo</Badge>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Trabalhadores, treinamentos e exames
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
     </div>
   );
 }

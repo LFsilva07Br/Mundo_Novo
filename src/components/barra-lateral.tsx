@@ -31,19 +31,19 @@ const visaoGeral: ItemNavegacao[] = [
   { rotulo: "Dashboard", href: "/painel", icone: LayoutDashboard, disponivel: true },
   { rotulo: "Grupos", href: "/painel/grupos", icone: Building2, disponivel: true },
   { rotulo: "Clientes", href: "/painel/clientes", icone: Users, disponivel: true },
-  { rotulo: "Imóveis & Talhões", href: "/painel/imoveis", icone: Map },
-  { rotulo: "Contratos", href: "/painel/contratos", icone: FileSignature },
-  { rotulo: "Certificações", href: "/painel/workflow", icone: Workflow },
-  { rotulo: "Visitas", href: "/painel/visitas", icone: ClipboardCheck },
-  { rotulo: "CAPAs", href: "/painel/capas", icone: ShieldCheck },
-  { rotulo: "Social & Colaboradores", href: "/painel/social", icone: UsersRound },
+  { rotulo: "Imóveis & Talhões", href: "/painel/imoveis", icone: Map, disponivel: true },
+  { rotulo: "Contratos", href: "/painel/contratos", icone: FileSignature, disponivel: true },
+  { rotulo: "Certificações", href: "/painel/workflow", icone: Workflow, disponivel: true },
+  { rotulo: "Visitas", href: "/painel/visitas", icone: ClipboardCheck, disponivel: true },
+  { rotulo: "CAPAs", href: "/painel/capas", icone: ShieldCheck, disponivel: true },
+  { rotulo: "Social & Colaboradores", href: "/painel/social", icone: UsersRound, disponivel: true },
 ];
 
 const configuracao: ItemNavegacao[] = [
-  { rotulo: "Checklists", href: "/painel/checklists", icone: ListChecks },
-  { rotulo: "Alertas & Automação", href: "/painel/automacao", icone: Bell },
-  { rotulo: "Usuários & Permissões", href: "/painel/usuarios", icone: Landmark },
-  { rotulo: "Relatórios", href: "/painel/relatorios", icone: BookOpen },
+  { rotulo: "Checklists", href: "/painel/checklists", icone: ListChecks, disponivel: true },
+  { rotulo: "Alertas & Automação", href: "/painel/automacao", icone: Bell, disponivel: true },
+  { rotulo: "Usuários & Permissões", href: "/painel/usuarios", icone: Landmark, disponivel: true },
+  { rotulo: "Relatórios", href: "/painel/relatorios", icone: BookOpen, disponivel: true },
 ];
 
 function GrupoNavegacao({
