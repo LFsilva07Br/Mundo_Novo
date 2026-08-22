@@ -49,6 +49,15 @@ export function FormularioLogin() {
           <Button type="submit" className="w-full" disabled={pendente}>
             {pendente ? "Entrando…" : "Entrar"}
           </Button>
+
+          <p className="text-center">
+            <a
+              href="/recuperar-senha"
+              className="text-sm font-semibold text-muted-foreground hover:text-foreground"
+            >
+              Esqueci a senha
+            </a>
+          </p>
         </form>
       </CardContent>
     </Card>
