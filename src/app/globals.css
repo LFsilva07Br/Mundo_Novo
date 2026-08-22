@@ -1,0 +1,147 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-inter);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-coffee: var(--coffee);
+  --color-success: var(--success);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/*
+ * Identidade visual Mundo Novo Café — "verde café minimalista"
+ * Paleta definida no protótipo aprovado (ago/2026)
+ */
+:root {
+  --background: #f7f6f1;
+  --foreground: #1c1e1b;
+  --card: #ffffff;
+  --card-foreground: #1c1e1b;
+  --popover: #ffffff;
+  --popover-foreground: #1c1e1b;
+  --primary: #1b4332;
+  --primary-foreground: #ffffff;
+  --secondary: #e7f3eb;
+  --secondary-foreground: #1b4332;
+  --muted: #f0f4ef;
+  --muted-foreground: #707a6f;
+  --accent: #d8f3dc;
+  --accent-foreground: #1b4332;
+  --destructive: #c4453c;
+  --warning: #d97706;
+  --info: #3b5ba5;
+  --coffee: #b08968;
+  --success: #2d6a4f;
+  --border: #eceae1;
+  --input: #e3e1d6;
+  --ring: #2d6a4f;
+  --chart-1: #1b4332;
+  --chart-2: #40916c;
+  --chart-3: #95d5b2;
+  --chart-4: #b08968;
+  --chart-5: #d97706;
+  --radius: 0.875rem;
+  --sidebar: #122b1f;
+  --sidebar-foreground: #d8f3dc;
+  --sidebar-primary: #2d6a4f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1b4332;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.12);
+  --sidebar-ring: #40916c;
+}
+
+.dark {
+  --background: #0e1f16;
+  --foreground: #e8f1e9;
+  --card: #14291d;
+  --card-foreground: #e8f1e9;
+  --popover: #14291d;
+  --popover-foreground: #e8f1e9;
+  --primary: #95d5b2;
+  --primary-foreground: #122b1f;
+  --secondary: #1b4332;
+  --secondary-foreground: #d8f3dc;
+  --muted: #1a3325;
+  --muted-foreground: #8faf9b;
+  --accent: #1b4332;
+  --accent-foreground: #d8f3dc;
+  --destructive: #e06b5f;
+  --warning: #f59e0b;
+  --info: #7b9bd5;
+  --coffee: #c89f71;
+  --success: #74c69d;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #40916c;
+  --chart-1: #95d5b2;
+  --chart-2: #40916c;
+  --chart-3: #2d6a4f;
+  --chart-4: #c89f71;
+  --chart-5: #f59e0b;
+  --sidebar: #0b1a12;
+  --sidebar-foreground: #d8f3dc;
+  --sidebar-primary: #2d6a4f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1b4332;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: #40916c;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
