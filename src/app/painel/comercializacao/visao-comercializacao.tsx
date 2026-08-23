@@ -28,6 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { EstadoVazio } from "@/components/estado-vazio";
 import {
   atualizarStatusNegociacao,
   marcarLoteEntregue,
@@ -217,9 +218,10 @@ export function VisaoComercializacao({
         </CardHeader>
         <CardContent>
           {lotes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhum lote cadastrado — comece pelo botão “Novo lote”.
-            </p>
+            <EstadoVazio
+              icone={Package}
+              titulo="Nenhum lote cadastrado — comece pelo botão “Novo lote”."
+            />
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -309,9 +311,11 @@ export function VisaoComercializacao({
                           <TableRow className="bg-muted/40 hover:bg-muted/40">
                             <TableCell colSpan={10} className="p-4">
                               {lote.negociacoes.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">
-                                  Nenhuma negociação registrada para este lote.
-                                </p>
+                                <EstadoVazio
+                                  icone={HandCoins}
+                                  titulo="Nenhuma negociação registrada para este lote."
+                                  className="py-6"
+                                />
                               ) : (
                                 <Table>
                                   <TableHeader>

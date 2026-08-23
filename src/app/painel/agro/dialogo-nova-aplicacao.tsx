@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { registrarAplicacao, type EstadoAcao } from "@/lib/agro/acoes";
+import { useAvisarResultado } from "@/lib/ui/avisar-resultado";
 
 export type OpcaoTalhao = { id: string; nome: string; imovelNome: string };
 export type OpcaoProduto = { id: string; nome: string; proibidoRa: boolean };
@@ -44,6 +45,11 @@ export function DialogoNovaAplicacao({
     registrarAplicacao,
     null,
   );
+  // O diálogo segue aberto quando há avisos de carência/reentrada — a pessoa
+  // precisa ler o alerta antes de sair da tela.
+  useAvisarResultado(estado, {
+    sucesso: "Aplicação de defensivo registrada no caderno de campo.",
+  });
 
   const produtoSelecionado = produtos.find((p) => p.id === produtoId);
 
@@ -180,9 +186,6 @@ export function DialogoNovaAplicacao({
             ) : null}
             {estado?.ok ? (
               <div className="space-y-2">
-                <p role="status" className="text-sm font-medium text-primary">
-                  {estado.mensagem}
-                </p>
                 {estado.avisos?.map((aviso) => (
                   <p
                     key={aviso}

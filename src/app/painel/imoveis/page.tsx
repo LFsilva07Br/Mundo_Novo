@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Droplets } from "lucide-react";
+import { Droplets, Home, MapPin, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { BadgeVencimento } from "@/components/badge-vencimento";
 import {
@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { EstadoVazio } from "@/components/estado-vazio";
 import { listarClientes } from "@/lib/carteira/consultas";
 import {
   listarImoveisDoCliente,
@@ -96,9 +97,11 @@ export default async function PaginaImoveis({
         <h1 className="text-2xl font-extrabold tracking-tight">
           Imóveis rurais & Talhões
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Nenhum cliente cadastrado ainda.
-        </p>
+        <EstadoVazio
+          icone={Users}
+          titulo="Nenhum cliente cadastrado ainda."
+          className="mt-4"
+        />
       </div>
     );
   }
@@ -211,10 +214,10 @@ export default async function PaginaImoveis({
         </CardHeader>
         <CardContent className="overflow-x-auto">
           {imoveis.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhum imóvel rural cadastrado para este cliente — use o botão
-              &ldquo;Novo imóvel&rdquo;.
-            </p>
+            <EstadoVazio
+              icone={Home}
+              titulo="Nenhum imóvel rural cadastrado para este cliente — use o botão “Novo imóvel”."
+            />
           ) : (
             <Table>
               <TableHeader>
@@ -344,10 +347,10 @@ export default async function PaginaImoveis({
         </CardHeader>
         <CardContent className="overflow-x-auto">
           {talhoes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhum talhão cadastrado para este cliente — use o botão
-              &ldquo;Novo talhão&rdquo;.
-            </p>
+            <EstadoVazio
+              icone={MapPin}
+              titulo="Nenhum talhão cadastrado para este cliente — use o botão “Novo talhão”."
+            />
           ) : (
             <Table>
               <TableHeader>

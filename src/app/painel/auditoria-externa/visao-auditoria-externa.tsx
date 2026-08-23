@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
-import { AlertTriangle, ClipboardCheck, Plus } from "lucide-react";
+import { ClipboardCheck, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { BadgeVencimento } from "@/components/badge-vencimento";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { registrarAchado } from "@/lib/auditoria-externa/acoes";
+import { EstadoVazioLinha } from "@/components/estado-vazio";
 import type { AchadoExterno } from "@/lib/auditoria-externa/consultas";
 import {
   CERTIFICADORA_PADRAO,
@@ -62,6 +64,12 @@ type Props = {
   modoDemo: boolean;
 };
 
+function avisoAchadoRegistrado(comCapa: boolean | undefined): string {
+  return comCapa
+    ? "Achado da certificadora registrado — a CAPA correspondente já nasceu aberta."
+    : "Achado da certificadora registrado com o prazo definido.";
+}
+
 function hojeIso(): string {
   const hoje = new Date();
   const mes = String(hoje.getMonth() + 1).padStart(2, "0");
@@ -75,7 +83,6 @@ export function VisaoAuditoriaExterna({ achados, clientes, modoDemo }: Props) {
   const [achadosLocais, setAchadosLocais] = useState(achados);
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("");
-  const [erro, setErro] = useState<string | null>(null);
   const [dialogoAberto, setDialogoAberto] = useState(false);
   const [pendente, iniciarTransicao] = useTransition();
 
@@ -101,7 +108,6 @@ export function VisaoAuditoriaExterna({ achados, clientes, modoDemo }: Props) {
   }, [todos]);
 
   function aoRegistrar(dados: DadosAchado) {
-    setErro(null);
     if (modoDemo) {
       const cliente = clientes.find((c) => c.id === dados.clienteId);
       setAchadosLocais((atuais) => [
@@ -124,15 +130,17 @@ export function VisaoAuditoriaExterna({ achados, clientes, modoDemo }: Props) {
         ...atuais,
       ]);
       setDialogoAberto(false);
+      toast.success(avisoAchadoRegistrado(dados.criarCapa));
       return;
     }
     iniciarTransicao(async () => {
       const resultado = await registrarAchado(dados);
       if (!resultado.ok) {
-        setErro(resultado.erro);
+        toast.error(resultado.erro);
         return;
       }
       setDialogoAberto(false);
+      toast.success(avisoAchadoRegistrado(dados.criarCapa));
     });
   }
 
@@ -164,13 +172,6 @@ export function VisaoAuditoriaExterna({ achados, clientes, modoDemo }: Props) {
           prazo — o sistema já sugere a data.
         </p>
       </div>
-
-      {erro ? (
-        <p className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive">
-          <AlertTriangle className="size-4 shrink-0" />
-          {erro}
-        </p>
-      ) : null}
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <Card>
@@ -264,14 +265,12 @@ export function VisaoAuditoriaExterna({ achados, clientes, modoDemo }: Props) {
             </TableHeader>
             <TableBody>
               {exibidos.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    className="py-6 text-center text-sm text-muted-foreground"
-                  >
-                    Nenhum achado com os filtros escolhidos.
-                  </TableCell>
-                </TableRow>
+                <EstadoVazioLinha
+                  colunas={7}
+                  icone={ClipboardCheck}
+                  titulo="Nenhum achado com os filtros escolhidos."
+                  descricao="Troque o cliente ou o status no filtro acima, ou registre um achado da certificadora."
+                />
               ) : (
                 exibidos.map((achado) => (
                   <TableRow key={achado.id}>

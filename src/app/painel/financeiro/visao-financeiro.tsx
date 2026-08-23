@@ -2,16 +2,16 @@
 
 import { useState, useTransition } from "react";
 import {
-  AlertTriangle,
   Banknote,
   CalendarClock,
-  CheckCircle2,
   Copy,
+  FileText,
   HandCoins,
   Info,
   Percent,
   RefreshCcw,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,6 +48,7 @@ import {
   type Fatura,
   type StatusFatura,
 } from "@/lib/financeiro/regras";
+import { EstadoVazio } from "@/components/estado-vazio";
 import { BotaoNovoContrato, type OpcaoCliente } from "./dialogos";
 
 const VARIANTE_STATUS_FATURA: Record<
@@ -105,8 +106,6 @@ export function VisaoFinanceiro({
   hoje,
   modoPreparado,
 }: Props) {
-  const [erro, setErro] = useState<string | null>(null);
-  const [aviso, setAviso] = useState<string | null>(null);
   const [idPendente, setIdPendente] = useState<string | null>(null);
   const [idCopiado, setIdCopiado] = useState<string | null>(null);
   const [, iniciarTransicao] = useTransition();
@@ -124,15 +123,17 @@ export function VisaoFinanceiro({
         a.clienteNome.localeCompare(b.clienteNome, "pt-BR"),
     );
 
-  function executar(id: string, acao: () => Promise<ResultadoAcao>) {
-    setErro(null);
-    setAviso(null);
+  function executar(
+    id: string,
+    acao: () => Promise<ResultadoAcao>,
+    sucesso: string,
+  ) {
     setIdPendente(id);
     iniciarTransicao(async () => {
       try {
         const resultado = await acao();
-        if (!resultado.ok) setErro(resultado.erro);
-        else if (resultado.mensagem) setAviso(resultado.mensagem);
+        if (resultado.ok) toast.success(resultado.mensagem ?? sucesso);
+        else toast.error(resultado.erro);
       } finally {
         setIdPendente(null);
       }
@@ -140,13 +141,15 @@ export function VisaoFinanceiro({
   }
 
   async function copiarCobranca(fatura: Fatura) {
-    setErro(null);
     try {
       await navigator.clipboard.writeText(mensagemCobranca(fatura));
       setIdCopiado(fatura.id);
       setTimeout(() => setIdCopiado(null), 3000);
+      toast.success(
+        `Cobrança de ${fatura.clienteNome} copiada — cole no WhatsApp do cliente.`,
+      );
     } catch {
-      setErro(
+      toast.error(
         "Não foi possível copiar a mensagem — copie manualmente e envie ao cliente.",
       );
     }
@@ -173,7 +176,11 @@ export function VisaoFinanceiro({
             variant="outline"
             disabled={idPendente === "gerar-faturas"}
             onClick={() =>
-              executar("gerar-faturas", () => gerarFaturasDoMes(mesAtual))
+              executar(
+                "gerar-faturas",
+                () => gerarFaturasDoMes(mesAtual),
+                `Faturas de ${rotuloCompetencia(mesAtual)} geradas a partir dos contratos ativos.`,
+              )
             }
           >
             <RefreshCcw data-icon="inline-start" />
@@ -188,19 +195,6 @@ export function VisaoFinanceiro({
           <Info className="size-4 shrink-0" />
           Módulo em pré-ativação — os lançamentos serão gravados após a
           migração financeira. Os valores abaixo são de demonstração.
-        </p>
-      ) : null}
-
-      {erro ? (
-        <p className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive">
-          <AlertTriangle className="size-4 shrink-0" />
-          {erro}
-        </p>
-      ) : null}
-      {aviso ? (
-        <p className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-semibold text-primary">
-          <CheckCircle2 className="size-4 shrink-0" />
-          {aviso}
         </p>
       ) : null}
 
@@ -286,9 +280,11 @@ export function VisaoFinanceiro({
         </CardHeader>
         <CardContent>
           {faturasDoMes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhuma fatura para este mês — use “Gerar faturas do mês”.
-            </p>
+            <EstadoVazio
+              icone={FileText}
+              titulo="Nenhuma fatura para este mês."
+              descricao="Use “Gerar faturas do mês” para emitir as faturas dos contratos ativos de uma vez."
+            />
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -329,8 +325,10 @@ export function VisaoFinanceiro({
                               size="sm"
                               disabled={idPendente === fatura.id}
                               onClick={() =>
-                                executar(fatura.id, () =>
-                                  registrarPagamento(fatura.id, hoje),
+                                executar(
+                                  fatura.id,
+                                  () => registrarPagamento(fatura.id, hoje),
+                                  `Pagamento de ${fatura.clienteNome} registrado — fatura de ${formatarMoeda(fatura.valor)} quitada.`,
                                 )
                               }
                             >
@@ -367,9 +365,10 @@ export function VisaoFinanceiro({
         </CardHeader>
         <CardContent>
           {contratos.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhum contrato cadastrado — comece pelo botão “Novo contrato”.
-            </p>
+            <EstadoVazio
+              icone={FileText}
+              titulo="Nenhum contrato cadastrado — comece pelo botão “Novo contrato”."
+            />
           ) : (
             <div className="overflow-x-auto">
               <Table>

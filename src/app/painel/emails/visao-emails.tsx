@@ -1,3 +1,4 @@
+import { Mail } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -14,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { EstadoVazio } from "@/components/estado-vazio";
 
 /**
  * Histórico dos e-mails automáticos (tabela envios_email) + guia de
@@ -105,10 +107,11 @@ export function VisaoEmails({
         </CardHeader>
         <CardContent>
           {envios.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhum e-mail registrado ainda. Os registros aparecem quando os
-              alertas automáticos começarem a disparar.
-            </p>
+            <EstadoVazio
+              icone={Mail}
+              titulo="Nenhum e-mail registrado ainda."
+              descricao="Os registros aparecem quando os alertas automáticos começarem a disparar."
+            />
           ) : (
             <Table>
               <TableHeader>

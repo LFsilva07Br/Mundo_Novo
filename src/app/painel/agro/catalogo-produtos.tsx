@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -9,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { EstadoVazio } from "@/components/estado-vazio";
 
 export type ProdutoCatalogo = {
   id: string;
@@ -50,11 +52,14 @@ export function CatalogoProdutos({ produtos }: { produtos: ProdutoCatalogo[] }) 
       </CardHeader>
       <CardContent className="space-y-3">
         {visiveis.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {soProibidos
-              ? "Nenhum produto proibido no catálogo — ótimo sinal."
-              : "Nenhum produto cadastrado ainda."}
-          </p>
+          <EstadoVazio
+            icone={Package}
+            titulo={
+              soProibidos
+                ? "Nenhum produto proibido no catálogo — ótimo sinal."
+                : "Nenhum produto cadastrado ainda."
+            }
+          />
         ) : null}
         {visiveis.map((p) => (
           <div

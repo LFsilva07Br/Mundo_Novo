@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DialogoConfirmar } from "@/components/dialogo-confirmar";
 import {
   definirPlanejamento,
   removerPlanejamento,
@@ -444,15 +445,25 @@ function DialogoPlanejamento({
           </div>
           <DialogFooter className="mt-2 gap-2">
             {existente ? (
-              <Button
-                type="button"
-                variant="destructive"
-                disabled={pendente}
-                onClick={() => aoRemover(cliente.id, existente.tipo)}
-              >
-                <Trash2 className="size-4" />
-                Remover
-              </Button>
+              <DialogoConfirmar
+                gatilho={
+                  <Button type="button" variant="destructive" disabled={pendente}>
+                    <Trash2 className="size-4" />
+                    Remover
+                  </Button>
+                }
+                titulo={`Remover o planejamento de ${cliente.nome}?`}
+                oQueMuda={`A ${ROTULO_TIPO_PLANEJAMENTO[existente.tipo].toLowerCase()} prevista para ${MESES_LONGOS[existente.mesPrevisto - 1]} de ${ano} sai da grade e ${cliente.nome} volta a contar como cliente sem planejamento no ano.`}
+                oQueNaoMuda={
+                  existente.realizado
+                    ? "A visita já realizada e o laudo dela continuam no sistema — só o planejamento do ano sai da grade."
+                    : "Visitas já realizadas, CAPAs e o histórico do cliente continuam intactos — só o mês previsto sai da grade."
+                }
+                rotuloAcao="Remover planejamento"
+                destrutivo
+                pendente={pendente}
+                aoConfirmar={() => aoRemover(cliente.id, existente.tipo)}
+              />
             ) : null}
             <Button type="submit" disabled={pendente}>
               {existente ? "Salvar alteração" : "Planejar visita"}

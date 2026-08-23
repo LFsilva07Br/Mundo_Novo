@@ -23,6 +23,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SelectNativo } from "@/components/select-nativo";
+import { EstadoVazio } from "@/components/estado-vazio";
 import {
   removerConfiguracao,
   salvarConfiguracaoCliente,
@@ -102,10 +103,10 @@ export function OverridesClientes({
         ) : null}
 
         {configuracoes.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Nenhum override cadastrado — todos os clientes seguem a régua
-            padrão.
-          </p>
+          <EstadoVazio
+            icone={SlidersHorizontal}
+            titulo="Nenhum override cadastrado — todos os clientes seguem a régua padrão."
+          />
         ) : (
           <ul className="space-y-2">
             {configuracoes.map((config) => (

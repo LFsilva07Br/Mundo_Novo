@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { AlertTriangle, Download, Leaf, Plus } from "lucide-react";
+import { Download, Leaf, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -31,6 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { registrarPagamento } from "@/lib/sustentabilidade/acoes";
+import { EstadoVazioLinha } from "@/components/estado-vazio";
 import type { PagamentoSustentabilidade } from "@/lib/sustentabilidade/consultas";
 import {
   clientesContemplados,
@@ -54,11 +56,20 @@ type Props = {
   modoDemo: boolean;
 };
 
+/** Aviso de sucesso com o tipo e o valor lançado — é o que o auditor confere. */
+function avisoPagamento(formData: FormData): string {
+  const tipo =
+    String(formData.get("tipo") ?? "diferencial") === "investimento"
+      ? "Investimento (DI)"
+      : "Diferencial de Sustentabilidade (DS)";
+  const valor = Number(formData.get("valor") ?? 0);
+  return `${tipo} de ${moeda.format(valor)} registrado para o produtor.`;
+}
+
 export function VisaoSustentabilidade({ pagamentos, clientes, modoDemo }: Props) {
   // Estado local usado apenas no modo demonstração (simulação sem gravar);
   // conectado ao banco, a revalidação do servidor atualiza as props.
   const [pagamentosLocais, setPagamentosLocais] = useState(pagamentos);
-  const [erro, setErro] = useState<string | null>(null);
   const [dialogoAberto, setDialogoAberto] = useState(false);
   const [pendente, iniciarTransicao] = useTransition();
 
@@ -74,13 +85,12 @@ export function VisaoSustentabilidade({ pagamentos, clientes, modoDemo }: Props)
   const contemplados = useMemo(() => clientesContemplados(exibidos), [exibidos]);
 
   function aoRegistrar(formData: FormData) {
-    setErro(null);
     if (modoDemo) {
       const clienteId = String(formData.get("clienteId") ?? "");
       const cliente = clientes.find((c) => c.id === clienteId);
       const valor = Number(formData.get("valor") ?? 0);
       if (!cliente || !(valor > 0)) {
-        setErro("Escolha o produtor e informe um valor maior que zero.");
+        toast.error("Escolha o produtor e informe um valor maior que zero.");
         return;
       }
       setPagamentosLocais((atuais) => [
@@ -99,15 +109,17 @@ export function VisaoSustentabilidade({ pagamentos, clientes, modoDemo }: Props)
         ...atuais,
       ]);
       setDialogoAberto(false);
+      toast.success(avisoPagamento(formData));
       return;
     }
     iniciarTransicao(async () => {
       const resultado = await registrarPagamento(formData);
       if (!resultado.ok) {
-        setErro(resultado.erro);
+        toast.error(resultado.erro);
         return;
       }
       setDialogoAberto(false);
+      toast.success(avisoPagamento(formData));
     });
   }
 
@@ -149,13 +161,6 @@ export function VisaoSustentabilidade({ pagamentos, clientes, modoDemo }: Props)
           valor, data e comprovante — é o que o auditor confere.
         </p>
       </div>
-
-      {erro ? (
-        <p className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive">
-          <AlertTriangle className="size-4 shrink-0" />
-          {erro}
-        </p>
-      ) : null}
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <Card>
@@ -207,6 +212,14 @@ export function VisaoSustentabilidade({ pagamentos, clientes, modoDemo }: Props)
               </TableRow>
             </TableHeader>
             <TableBody>
+              {porClienteAno.length === 0 ? (
+                <EstadoVazioLinha
+                  colunas={5}
+                  icone={Leaf}
+                  titulo="Nenhum pagamento de DS/DI consolidado ainda."
+                  descricao="Assim que o primeiro Diferencial de Sustentabilidade ou Investimento for lançado, o total por cliente e ano aparece aqui."
+                />
+              ) : null}
               {porClienteAno.map((linha) => (
                 <TableRow key={`${linha.clienteId}-${linha.ano}`}>
                   <TableCell className="font-semibold">
@@ -248,6 +261,14 @@ export function VisaoSustentabilidade({ pagamentos, clientes, modoDemo }: Props)
               </TableRow>
             </TableHeader>
             <TableBody>
+              {exibidos.length === 0 ? (
+                <EstadoVazioLinha
+                  colunas={5}
+                  icone={Leaf}
+                  titulo="Nenhum pagamento registrado com os filtros escolhidos."
+                  descricao="Troque o cliente ou o ano no filtro acima, ou registre o primeiro pagamento de DS/DI."
+                />
+              ) : null}
               {exibidos.map((pagamento) => (
                 <TableRow key={pagamento.id}>
                   <TableCell className="text-sm">

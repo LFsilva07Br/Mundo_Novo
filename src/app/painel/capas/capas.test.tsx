@@ -57,9 +57,35 @@ describe("Planos de ação — CAPA", () => {
     }
     expect(screen.getByRole("button", { name: "Fechar CAPA" })).toBeEnabled();
 
-    // Fecha a CAPA (demonstração: simulação local).
+    // Fechar CAPA é irreversível: primeiro pede confirmação.
     await usuario.click(screen.getByRole("button", { name: "Fechar CAPA" }));
+    expect(screen.getByText("Fechar a CAPA #131?")).toBeInTheDocument();
+    expect(screen.getByText("O que não muda:")).toBeInTheDocument();
+    expect(screen.getAllByText("✓ Fechada")).toHaveLength(1);
+
+    // Confirma (demonstração: simulação local).
+    const botoesFechar = screen.getAllByRole("button", { name: "Fechar CAPA" });
+    await usuario.click(botoesFechar[botoesFechar.length - 1]);
     expect(screen.getAllByText("✓ Fechada").length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("cancelar a confirmação deixa a CAPA aberta", async () => {
+    const usuario = userEvent.setup();
+    render(<VisaoCapas capas={capas} clientes={CLIENTES} modoDemo={true} />);
+
+    await usuario.click(
+      screen.getByRole("button", { name: /Expandir CAPA #131/ }),
+    );
+    for (const caixa of screen.getAllByRole("checkbox")) {
+      if (!(caixa as HTMLInputElement).checked) await usuario.click(caixa);
+    }
+
+    await usuario.click(screen.getByRole("button", { name: "Fechar CAPA" }));
+    await usuario.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(screen.queryByText("Fechar a CAPA #131?")).not.toBeInTheDocument();
+    // Continua só a CAPA que já nasceu fechada na demonstração.
+    expect(screen.getAllByText("✓ Fechada")).toHaveLength(1);
   });
 
   it("área expandida traz a seção de Evidências (demonstração: aviso amigável)", async () => {

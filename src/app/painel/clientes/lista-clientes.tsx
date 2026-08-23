@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Search } from "lucide-react";
+import { ChevronRight, Search, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { BadgeVencimento } from "@/components/badge-vencimento";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { EstadoVazio } from "@/components/estado-vazio";
 import { ROTULO_NORMA, type Cliente, type Grupo } from "@/lib/carteira/tipos";
 
 type Filtro = "todos" | "fazenda" | "cadeia_suprimentos" | "sem_grupo";
@@ -77,9 +78,10 @@ export function ListaClientes({
       </div>
 
       {filtrados.length === 0 ? (
-        <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-          Nenhum cliente encontrado com a busca e os filtros atuais.
-        </p>
+        <EstadoVazio
+          icone={Users}
+          titulo="Nenhum cliente encontrado com a busca e os filtros atuais."
+        />
       ) : (
         <div className="space-y-3">
           {filtrados.map((cliente) => {

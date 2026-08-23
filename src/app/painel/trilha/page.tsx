@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Lock } from "lucide-react";
+import { History, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { EstadoVazio } from "@/components/estado-vazio";
 import { listarEventosTrilha } from "@/lib/trilha/consultas";
 import {
   rotuloAcao,
@@ -93,9 +94,10 @@ export default async function PaginaTrilha({
         </CardHeader>
         <CardContent>
           {filtrados.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">
-              Nenhum evento encontrado com os filtros escolhidos.
-            </p>
+            <EstadoVazio
+              icone={History}
+              titulo="Nenhum evento encontrado com os filtros escolhidos."
+            />
           ) : (
             <Table>
               <TableHeader>

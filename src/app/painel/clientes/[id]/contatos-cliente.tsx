@@ -14,6 +14,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SelectNativo } from "@/components/select-nativo";
+import { DialogoConfirmar } from "@/components/dialogo-confirmar";
+import { EstadoVazio } from "@/components/estado-vazio";
 import {
   Table,
   TableBody,
@@ -131,24 +133,36 @@ export function ContatosCliente({
                         </Button>
                       ) : null;
                     })()}
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={`Remover contato ${contato.nome}`}
-                      disabled={removendo}
-                      onClick={() => remover(contato)}
-                    >
-                      <Trash2 className="size-3.5 text-destructive" />
-                    </Button>
+                    <DialogoConfirmar
+                      gatilho={
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Remover contato ${contato.nome}`}
+                          disabled={removendo}
+                        >
+                          <Trash2 className="size-3.5 text-destructive" />
+                        </Button>
+                      }
+                      titulo={`Remover ${contato.nome} dos contatos?`}
+                      oQueMuda={`${contato.nome} deixa de ser o contato de ${ROTULO_AREA_CONTATO[contato.area].toLowerCase()} de ${clienteNome}. Os avisos automáticos dessa área param de chegar até você cadastrar outro contato.`}
+                      oQueNaoMuda="Nada do histórico do cliente é apagado — visitas, CAPAs e documentos continuam intactos, e você pode cadastrar o contato de novo a qualquer momento."
+                      rotuloAcao="Remover contato"
+                      destrutivo
+                      pendente={removendo}
+                      aoConfirmar={() => remover(contato)}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            Nenhum contato cadastrado ainda — adicione o primeiro abaixo.
-          </p>
+          <EstadoVazio
+            icone={UserPlus}
+            titulo="Nenhum contato cadastrado ainda."
+            descricao="Adicione o primeiro no formulário abaixo — sem contato por área, os avisos automáticos não têm para quem ir."
+          />
         )}
 
         <form

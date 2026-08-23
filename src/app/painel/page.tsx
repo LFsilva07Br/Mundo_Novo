@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CalendarClock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { BadgeVencimento } from "@/components/badge-vencimento";
+import { EstadoVazioLinha } from "@/components/estado-vazio";
 import {
   Card,
   CardContent,
@@ -128,6 +130,14 @@ export default async function PaginaDashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {comVencimento.length === 0 ? (
+                <EstadoVazioLinha
+                  colunas={3}
+                  icone={CalendarClock}
+                  titulo="Nenhum certificado com vencimento cadastrado."
+                  descricao="Cadastre a data de vencimento na ficha de cada cliente — é ela que dispara os alertas de 180 a 30 dias."
+                />
+              ) : null}
               {comVencimento.map(({ cliente, cert }) => (
                 <TableRow key={`${cliente.id}-${cert.norma}`}>
                   <TableCell>
