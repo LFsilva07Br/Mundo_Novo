@@ -12,6 +12,11 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
   getUsuarioAtual: vi.fn(),
 }));
+// Guarda do modo auditor liberada aqui — o bloqueio tem teste próprio
+// em src/lib/auditor/guarda.test.ts.
+vi.mock("@/lib/auditor/guarda", () => ({
+  exigirEscrita: vi.fn(async () => null),
+}));
 
 const ID_PROCESSO = "11111111-1111-4111-8111-111111111111";
 const ID_CONTRATO = "22222222-1111-4111-8111-111111111111";

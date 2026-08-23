@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { exigirEscrita } from "@/lib/auditor/guarda";
 import { createClient, getUsuarioAtual } from "@/lib/supabase/server";
 import {
   calcularConformidade,
@@ -430,6 +431,10 @@ export type RespostaItem = z.infer<typeof EsquemaResposta>;
  * NC dispara a criação automática da CAPA no banco.
  */
 export async function responderItem(dados: RespostaItem): Promise<ResultadoAcao> {
+  // Auditor externo é somente leitura — recusa antes de qualquer consulta.
+  const bloqueio = await exigirEscrita();
+  if (bloqueio) return bloqueio;
+
   const supabase = await createClient();
   if (!supabase) return { ok: false, erro: ERRO_SEM_BANCO };
 
@@ -490,6 +495,10 @@ export async function responderItem(dados: RespostaItem): Promise<ResultadoAcao>
  * Conclui a visita — recusada enquanto houver item obrigatório sem resposta.
  */
 export async function concluirVisita(visitaId: string): Promise<ResultadoAcao> {
+  // Auditor externo é somente leitura — recusa antes de qualquer consulta.
+  const bloqueio = await exigirEscrita();
+  if (bloqueio) return bloqueio;
+
   const supabase = await createClient();
   if (!supabase) return { ok: false, erro: ERRO_SEM_BANCO };
 

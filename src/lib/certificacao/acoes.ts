@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { exigirEscrita } from "@/lib/auditor/guarda";
 import { createClient, getUsuarioAtual } from "@/lib/supabase/server";
 import {
   ehEtapaValida,
@@ -31,6 +32,10 @@ export async function moverEtapa(
   processoId: string,
   novaEtapa: string,
 ): Promise<ResultadoAcao> {
+  // Auditor externo é somente leitura — recusa antes de qualquer consulta.
+  const bloqueio = await exigirEscrita();
+  if (bloqueio) return bloqueio;
+
   const supabase = await createClient();
   if (!supabase) return { ok: false, erro: ERRO_DEMO };
 
@@ -112,6 +117,10 @@ export async function decidirContrato(
   contratoId: string,
   decisao: "aprovado" | "rejeitado",
 ): Promise<ResultadoAcao> {
+  // Auditor externo é somente leitura — recusa antes de qualquer consulta.
+  const bloqueio = await exigirEscrita();
+  if (bloqueio) return bloqueio;
+
   const supabase = await createClient();
   if (!supabase) return { ok: false, erro: ERRO_DEMO };
 
@@ -185,6 +194,10 @@ export async function concluirAcaoCapa(
 }
 
 export async function fecharCapa(capaId: string): Promise<ResultadoAcao> {
+  // Auditor externo é somente leitura — recusa antes de qualquer consulta.
+  const bloqueio = await exigirEscrita();
+  if (bloqueio) return bloqueio;
+
   const supabase = await createClient();
   if (!supabase) return { ok: false, erro: ERRO_DEMO };
 
@@ -245,6 +258,10 @@ const esquemaNovaCapa = z.object({
 export type DadosNovaCapa = z.input<typeof esquemaNovaCapa>;
 
 export async function criarCapa(dados: DadosNovaCapa): Promise<ResultadoAcao> {
+  // Auditor externo é somente leitura — recusa antes de qualquer consulta.
+  const bloqueio = await exigirEscrita();
+  if (bloqueio) return bloqueio;
+
   const entrada = esquemaNovaCapa.safeParse(dados);
   if (!entrada.success) {
     const primeiro = entrada.error.issues[0];

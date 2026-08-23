@@ -1,3 +1,4 @@
+import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import LayoutPainel from "./layout";
 import { createClient, getUsuarioAtual } from "@/lib/supabase/server";
@@ -14,12 +15,16 @@ vi.mock("@/lib/supabase/server", () => ({
   getUsuarioAtual: vi.fn(async () => null),
 }));
 
+// O Toaster do sonner depende de window.matchMedia, que o jsdom não tem.
+vi.mock("@/components/ui/sonner", () => ({ Toaster: () => null }));
+
 const criarClienteMock = vi.mocked(createClient);
 const usuarioAtualMock = vi.mocked(getUsuarioAtual);
 
 function clienteComPerfil(perfil: {
   deve_trocar_senha: boolean;
   cliente_id: string | null;
+  papel?: string;
 }) {
   return {
     from: vi.fn(() => ({
@@ -71,5 +76,31 @@ describe("Layout do painel", () => {
     );
     const elemento = await LayoutPainel(props);
     expect(elemento).toBeTruthy();
+  });
+
+  it("mostra o banner fixo de somente leitura para o auditor", async () => {
+    usuarioAtualMock.mockResolvedValue({ id: "u3", email: "a@x.com" } as never);
+    criarClienteMock.mockResolvedValue(
+      clienteComPerfil({
+        deve_trocar_senha: false,
+        cliente_id: null,
+        papel: "auditor",
+      }) as never,
+    );
+    render(await LayoutPainel(props));
+    expect(screen.getByText(/Modo auditor — somente leitura/)).toBeInTheDocument();
+  });
+
+  it("não mostra o banner de auditor para a equipe", async () => {
+    usuarioAtualMock.mockResolvedValue({ id: "u4", email: "g@x.com" } as never);
+    criarClienteMock.mockResolvedValue(
+      clienteComPerfil({
+        deve_trocar_senha: false,
+        cliente_id: null,
+        papel: "gestor",
+      }) as never,
+    );
+    render(await LayoutPainel(props));
+    expect(screen.queryByText(/Modo auditor/)).toBeNull();
   });
 });
