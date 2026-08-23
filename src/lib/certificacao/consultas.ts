@@ -41,6 +41,8 @@ export type ContratoAlcada = {
   id: string;
   codigo: string;
   clienteNome: string;
+  /** Cliente da carteira, quando o contrato já está vinculado a um cadastro. */
+  clienteId: string | null;
   tipo: TipoCliente;
   status: StatusContrato;
   solicitadoPor: string | null;
@@ -48,6 +50,11 @@ export type ContratoAlcada = {
   diasParado: number;
   decididoPor: string | null;
   decididoEm: string | null; // ISO
+  /**
+   * Campo livre do contrato: guarda o motivo da rejeição e, quando houver,
+   * o link do documento assinado (o único lugar do schema para isso).
+   */
+  observacao: string | null;
 };
 
 export type SeveridadeNc = "menor" | "maior" | "critica";
@@ -225,6 +232,7 @@ export async function listarContratos(): Promise<ContratoAlcada[]> {
       id: contrato.id,
       codigo: contrato.id,
       clienteNome: contrato.cliente,
+      clienteId: contrato.clienteId ?? null,
       tipo:
         contrato.tipo === "Fazenda"
           ? ("fazenda" as const)
@@ -235,13 +243,14 @@ export async function listarContratos(): Promise<ContratoAlcada[]> {
       diasParado: contrato.diasParado,
       decididoPor: null,
       decididoEm: null,
+      observacao: contrato.observacao ?? null,
     }));
   }
 
   const { data, error } = await supabase
     .from("contratos")
     .select(
-      "id, codigo, cliente_nome, tipo, status, solicitado_por, solicitado_em, decidido_em, decidido:perfis ( nome )",
+      "id, codigo, cliente_nome, cliente_id, tipo, status, solicitado_por, solicitado_em, decidido_em, observacao, decidido:perfis ( nome )",
     )
     .order("solicitado_em", { ascending: true });
   if (error) throw new Error(`Erro ao listar contratos: ${error.message}`);
@@ -250,11 +259,13 @@ export async function listarContratos(): Promise<ContratoAlcada[]> {
     id: string;
     codigo: string;
     cliente_nome: string;
+    cliente_id: string | null;
     tipo: TipoCliente;
     status: StatusContrato;
     solicitado_por: string | null;
     solicitado_em: string;
     decidido_em: string | null;
+    observacao: string | null;
     decidido: { nome: string } | null;
   };
 
@@ -262,6 +273,7 @@ export async function listarContratos(): Promise<ContratoAlcada[]> {
     id: linha.id,
     codigo: linha.codigo,
     clienteNome: linha.cliente_nome,
+    clienteId: linha.cliente_id,
     tipo: linha.tipo,
     status: linha.status,
     solicitadoPor: linha.solicitado_por,
@@ -270,6 +282,7 @@ export async function listarContratos(): Promise<ContratoAlcada[]> {
       linha.status === "aguardando_alcada" ? diasParado(linha.solicitado_em) : 0,
     decididoPor: linha.decidido?.nome ?? null,
     decididoEm: linha.decidido_em,
+    observacao: linha.observacao,
   }));
 }
 

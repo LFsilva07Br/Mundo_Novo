@@ -220,6 +220,84 @@ describe("decidirContrato — alçada é permissão", () => {
     expect(
       (atualizacao?.args[0] as { decidido_em: string }).decidido_em,
     ).toBeTruthy();
+    // Aprovação não escreve observação — o campo é do motivo da rejeição.
+    expect(atualizacao?.args[0]).not.toHaveProperty("observacao");
+  });
+});
+
+describe("decidirContrato — rejeição pede motivo", () => {
+  it("recusa rejeitar sem motivo, antes mesmo de ir ao banco", async () => {
+    const chamadas = usarSupabase({
+      perfis: [{ data: { alcada_aprovacao: true } }],
+      contratos: [{ error: null }],
+    });
+
+    const resultado = await decidirContrato(ID_CONTRATO, "rejeitado");
+
+    expect(resultado).toMatchObject({ ok: false });
+    if (!resultado.ok) expect(resultado.erro).toContain("motivo");
+    expect(chamadas).toHaveLength(0);
+  });
+
+  it("recusa motivo curto demais para dizer alguma coisa", async () => {
+    usarSupabase({ perfis: [{ data: { alcada_aprovacao: true } }] });
+
+    const resultado = await decidirContrato(ID_CONTRATO, "rejeitado", "não");
+
+    expect(resultado).toMatchObject({ ok: false });
+  });
+
+  it("recusa motivo longo demais — é um recado curto, não um laudo", async () => {
+    usarSupabase({ perfis: [{ data: { alcada_aprovacao: true } }] });
+
+    const resultado = await decidirContrato(
+      ID_CONTRATO,
+      "rejeitado",
+      "a".repeat(281),
+    );
+
+    expect(resultado).toMatchObject({ ok: false });
+  });
+
+  it("rejeita gravando o motivo em contratos.observacao", async () => {
+    const chamadas = usarSupabase({
+      perfis: [{ data: { alcada_aprovacao: true } }],
+      contratos: [{ error: null }],
+    });
+
+    const resultado = await decidirContrato(
+      ID_CONTRATO,
+      "rejeitado",
+      "  Valor acima do teto aprovado para fazendas deste porte.  ",
+    );
+
+    expect(resultado).toEqual({ ok: true });
+    const atualizacao = chamadas.find(
+      (c) => c.tabela === "contratos" && c.metodo === "update",
+    );
+    expect(atualizacao?.args[0]).toMatchObject({
+      status: "rejeitado",
+      decidido_por: ID_USUARIO,
+      observacao: "Valor acima do teto aprovado para fazendas deste porte.",
+    });
+  });
+
+  it("mantém a alçada: sem a permissão, o motivo não salva nada", async () => {
+    const chamadas = usarSupabase({
+      perfis: [{ data: { alcada_aprovacao: false } }],
+    });
+
+    const resultado = await decidirContrato(
+      ID_CONTRATO,
+      "rejeitado",
+      "Valor acima do teto aprovado para este porte.",
+    );
+
+    expect(resultado).toMatchObject({ ok: false });
+    if (!resultado.ok) expect(resultado.erro).toContain("alçada");
+    expect(
+      chamadas.some((c) => c.tabela === "contratos" && c.metodo === "update"),
+    ).toBe(false);
   });
 });
 
