@@ -126,3 +126,135 @@ Para conectar o Supabase: copie `.env.example` para `.env.local` e preencha com 
 | Domínio em português | O produto, a equipe e a cliente falam português; o código do domínio acompanha |
 | Robô como GitHub Actions | Sem servidor próprio; log visível; grava no Supabase via API |
 | Docs dentro do app | A Vercel publica a cada commit — documentação sempre sincronizada com o código |
+
+## Banco de dados — estrutura e diagrama
+
+**Motor:** PostgreSQL 17 (gerenciado pelo Supabase, região São Paulo). Todo o esquema vive em `supabase/migrations/` como **SQL padrão** — portável para qualquer PostgreSQL. Segurança por Row Level Security em todas as tabelas: equipe autenticada (perfil ativo sem vínculo de cliente) lê/escreve; usuários do portal (perfil com `cliente_id`) enxergam apenas os próprios dados.
+
+```mermaid
+erDiagram
+    GRUPOS ||--o{ CLIENTES : "agrupa"
+    CLIENTES ||--o{ CONTATOS_CLIENTE : "contatos por área"
+    CLIENTES ||--o{ REGISTROS_CONTATO : "histórico"
+    CLIENTES ||--o{ CERTIFICACOES : "possui"
+    CLIENTES ||--o{ IMOVEIS_RURAIS : "possui"
+    IMOVEIS_RURAIS ||--o{ DOCUMENTOS_IMOVEL : "CAR, licenças…"
+    IMOVEIS_RURAIS ||--o{ CAPTACOES_AGUA : "outorgas"
+    IMOVEIS_RURAIS ||--o{ TALHOES : "possui"
+    IMOVEIS_RURAIS ||--o{ MAPAS_IMOVEL : "KML/GeoJSON"
+    TALHOES ||--o{ TALHAO_SAFRAS : "histórico"
+    SAFRAS ||--o{ TALHAO_SAFRAS : "por safra"
+    CLIENTES ||--o| PROCESSOS_CERTIFICACAO : "etapa do workflow"
+    PROCESSOS_CERTIFICACAO ||--o{ MOVIMENTOS_WORKFLOW : "auditoria de movimentos"
+    CLIENTES ||--o{ VISITAS : "auditorias"
+    CHECKLISTS ||--o{ CHECKLIST_VERSOES : "versionado"
+    CHECKLIST_VERSOES ||--o{ CHECKLIST_ITENS : "itens da norma"
+    VISITAS ||--o{ VISITA_RESPOSTAS : "respostas"
+    CHECKLIST_ITENS ||--o{ VISITA_RESPOSTAS : "responde"
+    VISITAS ||--o{ VISITA_FOTOS : "evidências GPS"
+    CLIENTES ||--o{ CAPAS : "não conformidades"
+    VISITAS ||--o{ CAPAS : "NC gera (trigger)"
+    CAPAS ||--o{ CAPA_ACOES : "ações corretivas"
+    CAPAS ||--o{ CAPA_EVIDENCIAS : "evidências"
+    CLIENTES ||--o{ TAREFAS : "agenda (2 motores)"
+    CLIENTES ||--o{ TRABALHADORES : "módulo social"
+    CLIENTES ||--o{ MORADIAS : "casas"
+    MORADIAS ||--o{ MORADORES : "moradores"
+    TREINAMENTOS ||--o{ TREINAMENTO_PARTICIPACOES : "turmas"
+    TRABALHADORES ||--o{ TREINAMENTO_PARTICIPACOES : "participa"
+    CLIENTES ||--o{ LOTES : "comercialização"
+    SAFRAS ||--o{ LOTES : "da safra"
+    LOTES ||--o{ NEGOCIACOES : "negócios"
+    CLIENTES ||--o{ CONFIG_ALERTAS_CLIENTE : "override da régua"
+    PERFIS ||--o{ CONTRATOS : "decide (alçada)"
+    PERFIS }o--o| CLIENTES : "portal (cliente_id)"
+    EXECUCOES_ROBO {
+        string status
+        int certificados_consultados
+    }
+    ENVIOS_EMAIL {
+        string destinatario
+        string status
+    }
+```
+
+Tabelas de apoio sem relacionamento no diagrama: `perfis` (espelho de auth.users com papel, alçada, `deve_trocar_senha` e `cliente_id`), `exames_cargo`, `execucoes_robo`, `envios_email`.
+
+## De → Para: planilhas da cliente → banco de dados
+
+A estrutura foi desenhada a partir das três planilhas reais enviadas pela Mundo Novo Café. **Cobertura: 100% dos campos** — mapeamento abaixo.
+
+### CONTROLE AMBIENTAL (aba "Documentos Legais")
+
+| Campo da planilha | Destino no banco |
+|---|---|
+| Nome do Imóvel Rural | `imoveis_rurais.nome` |
+| Proprietário(s) | `imoveis_rurais.proprietarios` |
+| Registro do CAR | `imoveis_rurais.car` + `documentos_imovel` (tipo `car`) |
+| Matrícula(s) | `imoveis_rurais.matriculas` |
+| Área Total (ha) | `imoveis_rurais.area_total_ha` |
+| Área de Café (ha) | `imoveis_rurais.area_cafe_ha` |
+| Área de APP (ha) | `imoveis_rurais.area_app_ha` |
+| Área de Reserva Legal (ha) | `imoveis_rurais.area_reserva_ha` |
+| Talhão (lista por imóvel) | `talhoes.nome` (chave `imovel_id`) |
+| Possui Captação de Água? | `imoveis_rurais.possui_captacao_agua` |
+| Documento (Licença/Certidão de Dispensa) | `documentos_imovel.tipo` (`licenca`/`dispensa_licenca`) + `identificacao` |
+| Data de Vencimento do documento | `documentos_imovel.vence_em` (monitorado pelo motor de alertas) |
+| Status Documento (OK/Vencido/Próximo) | `documentos_imovel.status` |
+| Usos da Água — Nº Processo | `captacoes_agua.processo` |
+| Usos da Água — Tipo de Captação | `captacoes_agua.tipo_captacao` |
+| Usos da Água — Identificação (Uso insignificante…) | `captacoes_agua.classificacao` |
+| Usos da Água — Vencimento / Status | `captacoes_agua.vence_em` / `.status` |
+| Aba "Planilha1" (totais por fazenda) | visão calculada (soma dos imóveis) — sem redigitação |
+| Data de Atualização / Responsável | automático: `criado_em`/`atualizado_em` + autor da sessão |
+
+### LISTA DE TRABALHADORES (Dutra da Serra)
+
+| Campo da planilha | Destino no banco |
+|---|---|
+| Colaborador(a) | `trabalhadores.nome` |
+| Fixo × Temporário (abas) | `trabalhadores.vinculo` |
+| Função / CBO | `trabalhadores.funcao` / `.cbo` |
+| Fazenda / Produtor | `trabalhadores.cliente_id` |
+| Salário / Admissão / Nascimento / Gênero / Cultura | `salario` / `admissao` / `nascimento` / `genero` / `cultura` |
+| Benefícios (Moradia, Alimentação, Transporte, Cesta) | booleanos `moradia`/`alimentacao`/`transporte`/`cesta_basica` |
+| Gratificações / Insalubridade 20% / Periculosidade 30% | booleanos correspondentes |
+| Funções (Abastecimento, Defensivos, Colhedeira, Trator, Processamento, Outros) | `funcoes_habilitadas` (lista) |
+| Aba "Informações de Moradia" — CASA NN | `moradias.nome` |
+| Morador / Parentesco / Nascimento / Gênero | `moradores.*` (vínculo opcional ao trabalhador) |
+| Aba "Exames-Treinamentos" — treinamento × periodicidade | `treinamentos.nome` / `.norma` / `.periodicidade_meses` |
+| Matriz trabalhador × data de realização | `treinamento_participacoes.realizado_em` + `vence_em` calculado |
+| Legenda Atualizado/Vencido/Próximo/NA | status **calculado** pelo sistema (sem redigitação) |
+| Aba "Periodicidade Exames" — cargo × exames | `exames_cargo.*` |
+
+### ESTIMATIVA DE SAFRA — PODA E RENOVAÇÃO
+
+| Campo da planilha | Destino no banco |
+|---|---|
+| Abas por safra (2021-2022 … 2025-2026) | `safras.rotulo` |
+| Talhão | `talhoes.nome` |
+| Fazenda/Produtor | produtor do imóvel (`imoveis_rurais.proprietarios`) |
+| Área (ha) | `talhoes.area_ha` |
+| Número de Plantas/ha | `talhoes.plantas_por_ha` |
+| Espaçamento (metros) | `talhoes.espacamento` |
+| Variedade | `talhoes.variedade` |
+| Ano de Plantio | `talhoes.ano_plantio` |
+| Estado Físico da Lavoura | `talhao_safras.estado_lavoura` (por safra) |
+| Colheita Efetiva (sacas) | `talhao_safras.colheita_efetiva_sacas` |
+| Previsão de colheita (sacas) | `talhao_safras.previsao_sacas` |
+| Previsão de Poda e Renovação | `talhao_safras.previsao_poda_renovacao` |
+| Área (ha) Irrigação | `talhoes.area_irrigada_ha` |
+| Descrição da Metodologia | `talhao_safras.metodologia_previsao` |
+| Data de Atualização / Responsável | `talhao_safras.atualizado_em` / `.atualizado_por` |
+
+## Portabilidade e migração de arquitetura
+
+O projeto foi estruturado para migrar de nuvem sem reescrita:
+
+- **Banco**: migrations em SQL padrão do PostgreSQL — aplicam em qualquer Postgres (17+) com `psql`/CI. Dados exportáveis com `pg_dump`.
+- **Aplicação**: `Dockerfile` (build standalone do Next) + `docker-compose.yml` no repositório. Roda em qualquer servidor com Docker (on-premise, outra nuvem, VPS).
+- **Pontos com dependência do Supabase** (isolados na camada `src/lib/supabase/`): autenticação (GoTrue), storage de arquivos e as chamadas Admin API. Dois caminhos de migração:
+  1. **Supabase self-hosted** (recomendado p/ on-premise): a stack oficial roda em Docker e mantém 100% de compatibilidade — nenhuma alteração de código; ou
+  2. **Postgres puro + substituições**: trocar auth/storage por equivalentes (ex.: Keycloak + MinIO) reescrevendo apenas `src/lib/supabase/*` — o restante do código consome essa camada.
+- **Agendamentos**: crons da Vercel (`vercel.json`) viram `cron` do servidor chamando `/api/gatilhos` e `/api/resumo-semanal` com o `CRON_SECRET`; o robô (GitHub Actions) roda em qualquer agendador com Python 3.
+- **E-mail**: SMTP genérico via variáveis `SMTP_*` — funciona com Gmail gratuito, servidor corporativo ou qualquer provedor.

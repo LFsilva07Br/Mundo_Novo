@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CheckCircle2, CircleDashed, Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -9,131 +9,161 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Dashboard",
+  title: "Roadmap de implantação",
 };
 
-type EstadoFase = "concluida" | "em-andamento" | "planejada";
+type Fase = {
+  nome: string;
+  descricao: string;
+  percentual: number;
+  observacao?: string;
+};
 
-const fases: { nome: string; descricao: string; estado: EstadoFase }[] = [
+const fases: Fase[] = [
   {
     nome: "Fase 0 — Fundação",
     descricao:
-      "Projeto no ar: identidade visual, login, painel, documentação interativa, manual do usuário, testes e implantação contínua.",
-    estado: "concluida",
+      "Identidade visual, login, banco de dados, documentação viva, manual automático, testes e implantação contínua.",
+    percentual: 100,
   },
   {
     nome: "Fase 1 — Cadastros e permissões",
     descricao:
-      "Grupos, clientes, imóveis rurais (CAR, licenças, outorgas), talhões com histórico de safra e alçada de aprovação. Grupos e Clientes já disponíveis com a carteira real.",
-    estado: "em-andamento",
+      "Grupos, clientes, contatos por área, imóveis rurais (CAR, licenças, outorgas), talhões com histórico de safra, usuários e alçada.",
+    percentual: 100,
   },
   {
     nome: "Fase 2 — Certificações, contratos e workflow",
     descricao:
-      "Certificações por cliente, contratos com alçada e Kanban das 5 etapas reais, incluindo etapa de implantação. Prévia navegável no ar.",
-    estado: "em-andamento",
+      "Workflow Kanban das 6 etapas com histórico, contratos decididos por alçada real e notificação automática ao gestor.",
+    percentual: 100,
   },
   {
     nome: "Fase 3 — Checklist, NC e CAPA",
     descricao:
-      "Editor versionado vinculado à norma; NC nunca fica sem plano de ação. Prévia do editor e dos CAPAs no ar.",
-    estado: "em-andamento",
+      "Editor versionado da norma RA 1.4, execução de auditorias, NC→CAPA automático no banco e evidências fotográficas.",
+    percentual: 100,
   },
   {
     nome: "Fase 4 — App do consultor (offline)",
     descricao:
-      "PWA de campo com fotos, GPS, assinatura e fila de sincronização.",
-    estado: "planejada",
+      "PWA instalável com checklist offline, fotos com GPS, assinatura do produtor e fila de sincronização.",
+    percentual: 95,
+    observacao: "Desbloqueio por biometria em implantação",
   },
   {
     nome: "Fase 5 — Social & Colaboradores",
     descricao:
-      "Trabalhadores, moradias, treinamentos (NRs) e exames com vencimentos. Prévia com os dados reais no ar.",
-    estado: "em-andamento",
+      "Trabalhadores, moradias, treinamentos com vencimento calculado e exames por cargo.",
+    percentual: 100,
   },
   {
     nome: "Fase 6 — Automação e alertas",
     descricao:
-      "Motores por data e por evento; alertas persistentes até a resolução. Tela de configuração em prévia.",
-    estado: "em-andamento",
+      "Motores por data e por evento, overrides por cliente, resumo semanal e alertas persistentes.",
+    percentual: 95,
+    observacao: "Envio por e-mail aguarda configuração do SMTP (gratuito)",
   },
   {
     nome: "Fase 7 — Relatórios",
     descricao:
-      "Safra, ambiental, social e conformidade — exportação PDF/Excel. Prévia com dados reais no ar.",
-    estado: "em-andamento",
+      "Exportação Excel/PDF, relatório mensal do cliente com a marca da consultoria e pacote de auditoria externa.",
+    percentual: 100,
   },
   {
-    nome: "Fase 8 — Robô ALAICE",
+    nome: "Fase 8 — Robô da certificadora",
     descricao:
-      "Verificação diária de vencimentos no site da certificadora.",
-    estado: "planejada",
+      "Verificação diária dos certificados com log de execuções — modo verificação assistida com link ao diretório oficial da Rainforest Alliance.",
+    percentual: 90,
+    observacao: "Portal MyRA exige login e não tem API — verificação assistida é o modo definitivo",
+  },
+  {
+    nome: "Fase 9 — Expansões (portal, comercialização, mapas)",
+    descricao:
+      "Portal do produtor, módulo de comercialização com rastreabilidade por lote, mapas das fazendas (KML/CAR) e suíte de testes ponta a ponta.",
+    percentual: 40,
+    observacao: "Em construção hoje, com agentes em paralelo",
   },
 ];
 
-function IconeEstado({ estado }: { estado: EstadoFase }) {
-  if (estado === "concluida")
-    return <CheckCircle2 className="size-5 text-success" />;
-  if (estado === "em-andamento")
-    return <Loader2 className="size-5 animate-spin text-warning" />;
-  return <CircleDashed className="size-5 text-muted-foreground/50" />;
+function BarraProgresso({ percentual }: { percentual: number }) {
+  return (
+    <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
+      <div
+        className={cn(
+          "h-full rounded-full transition-all",
+          percentual >= 100 ? "bg-success" : "bg-primary",
+        )}
+        style={{ width: `${Math.min(percentual, 100)}%` }}
+      />
+    </div>
+  );
 }
 
-export default function PaginaDashboard() {
+export default function PaginaRoadmap() {
+  const media = Math.round(
+    fases.reduce((s, f) => s + f.percentual, 0) / fases.length,
+  );
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight">
-          Sistema em construção 🚧
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Acompanhe aqui o avanço de cada fase. A cada entrega, esta página dá
-          lugar ao dashboard de indicadores do protótipo aprovado.
-        </p>
-      </div>
+      <Link
+        href="/painel"
+        className="flex w-fit items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" />
+        Voltar ao painel
+      </Link>
 
       <Card>
         <CardHeader>
-          <CardTitle>Roadmap de implantação</CardTitle>
+          <CardTitle className="flex flex-wrap items-center justify-between gap-2">
+            Roadmap de implantação
+            <Badge variant="secondary" className="text-sm">
+              {media}% concluído
+            </Badge>
+          </CardTitle>
           <CardDescription>
-            Meta: sistema operacional para a Mundo Novo Café entre novembro e
-            dezembro de 2026 · proposta em 31 de outubro.
+            Meta original: sistema operacional entre novembro e dezembro de
+            2026 · proposta em 31 de outubro. Situação: as fases de software
+            do MVP foram entregues com ~2 meses de antecedência.
           </CardDescription>
+          <BarraProgresso percentual={media} />
         </CardHeader>
         <CardContent>
-          <ul className="space-y-4">
+          <ul className="space-y-5">
             {fases.map((fase) => (
-              <li key={fase.nome} className="flex gap-3">
-                <IconeEstado estado={fase.estado} />
-                <div className="min-w-0">
-                  <p className="flex flex-wrap items-center gap-2 text-sm font-bold">
-                    {fase.nome}
-                    {fase.estado === "em-andamento" ? (
-                      <Badge variant="secondary">Em andamento</Badge>
-                    ) : null}
-                  </p>
-                  <p className="text-[13px] text-muted-foreground">
-                    {fase.descricao}
-                  </p>
+              <li key={fase.nome} className="space-y-1.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-bold">{fase.nome}</p>
+                  <span
+                    className={cn(
+                      "text-sm font-extrabold",
+                      fase.percentual >= 100
+                        ? "text-success"
+                        : "text-primary",
+                    )}
+                  >
+                    {fase.percentual}%
+                  </span>
                 </div>
+                <BarraProgresso percentual={fase.percentual} />
+                <p className="text-[13px] text-muted-foreground">
+                  {fase.descricao}
+                </p>
+                {fase.observacao ? (
+                  <p className="text-xs font-semibold text-warning">
+                    ⏳ {fase.observacao}
+                  </p>
+                ) : null}
               </li>
             ))}
           </ul>
         </CardContent>
       </Card>
-
-      <p className="text-center text-sm text-muted-foreground">
-        A especificação completa está na{" "}
-        <Link
-          href="/docs"
-          className="font-semibold text-primary underline underline-offset-2"
-        >
-          documentação interativa
-        </Link>
-        , atualizada a cada alteração do sistema.
-      </p>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { ABAS_DOCS, carregarDoc, type AbaDocs } from "@/lib/docs";
 import { cn } from "@/lib/utils";
+import { RenderMermaid } from "./render-mermaid";
 
 export const metadata: Metadata = {
   title: "Documentação",
@@ -47,6 +48,7 @@ export default async function PaginaDocs({
         className="prose prose-neutral max-w-none dark:prose-invert prose-headings:tracking-tight prose-a:text-primary prose-th:text-left"
         dangerouslySetInnerHTML={{ __html: html }}
       />
+      <RenderMermaid />
     </div>
   );
 }

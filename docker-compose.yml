@@ -1,0 +1,43 @@
+# ============================================================
+# Mundo Novo Café — execução local / on-premise
+#
+# Caminho recomendado para on-premise COMPLETO (auth + storage +
+# banco): Supabase self-hosted (https://supabase.com/docs/guides/self-hosting)
+# ao lado desta aplicação — as migrations em supabase/migrations/
+# aplicam sem alteração, pois são SQL padrão do PostgreSQL.
+#
+# Este compose sobe a aplicação + um PostgreSQL 17 puro para
+# desenvolvimento/validação de banco.
+# ============================================================
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      CRON_SECRET: ${CRON_SECRET:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+    depends_on:
+      - banco
+
+  banco:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: mundo_novo
+      POSTGRES_USER: mundo_novo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-troque-esta-senha}
+    ports:
+      - "5432:5432"
+    volumes:
+      - dados_banco:/var/lib/postgresql/data
+      - ./supabase/migrations:/docker-entrypoint-initdb.d:ro
+
+volumes:
+  dados_banco:

@@ -22,7 +22,7 @@ import urllib.request
 
 SUPABASE_URL = os.environ["SUPABASE_URL"].rstrip("/")
 SERVICE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
-FONTE = "https://www.rainforest-alliance.org/business/sustainable-farming/farm-certification/certificate-search-and-public-summaries/"
+FONTE = "https://www.rainforest-alliance.org/pt-br/login/"  # portal MyRA (login) — fonte indicada pela Mundo Novo
 PAINEL_PUBLICO = (
     "https://app.powerbi.com/view?r=eyJrIjoiMmFjMjk0YzAtZTBlNy00NWNiLTk2M2YtZDJjY2NlNWFjOGM1"
     "IiwidCI6ImFkN2QzYTVkLWNkYTQtNDkyMi05MDkxLTdmOTk5ODM3MmEzYyIsImMiOjN9"
