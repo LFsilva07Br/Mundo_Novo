@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { CalendarClock, ClipboardList, Download, Users, Zap } from "lucide-react";
+import {
+  CalendarClock,
+  ClipboardList,
+  Download,
+  Settings,
+  Users,
+  Zap,
+} from "lucide-react";
 import { BadgeVencimento } from "@/components/badge-vencimento";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -60,16 +67,25 @@ export default function PaginaInicioCampo() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight">
-          {saudacaoDoDia(new Date().getHours())},{" "}
-          {pacote?.usuarioNome.split(" ")[0] ?? "consultor(a)"}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {pacote
-            ? `Pacote de dados de ${new Date(pacote.baixadoEm).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}.`
-            : "Nenhum pacote de dados no aparelho ainda."}
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight">
+            {saudacaoDoDia(new Date().getHours())},{" "}
+            {pacote?.usuarioNome.split(" ")[0] ?? "consultor(a)"}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {pacote
+              ? `Pacote de dados de ${new Date(pacote.baixadoEm).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}.`
+              : "Nenhum pacote de dados no aparelho ainda."}
+          </p>
+        </div>
+        <Link
+          href="/campo/ajustes"
+          aria-label="Ajustes"
+          className="mt-1 flex size-9 shrink-0 items-center justify-center rounded-xl border border-border text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <Settings className="size-4" />
+        </Link>
       </div>
 
       {!pacote ? (

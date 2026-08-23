@@ -4,15 +4,16 @@ import type { PacoteCampo, VisitaLocal } from "./tipos";
 /**
  * Banco local do App de Campo (IndexedDB via `idb`).
  *
- * Duas gavetas:
+ * Três gavetas:
  * - `pacote`: os dados baixados do servidor (clientes, checklist, tarefas)
  *   e metadados como a data da última sincronização;
  * - `visitas_locais`: visitas em andamento ou concluídas no aparelho,
- *   aguardando envio (rascunho contínuo — cada mudança é gravada aqui).
+ *   aguardando envio (rascunho contínuo — cada mudança é gravada aqui);
+ * - `config`: preferências do aparelho (ex.: credencial da biometria).
  */
 
 const NOME_BANCO = "mundo-novo-campo";
-const VERSAO = 1;
+const VERSAO = 2;
 
 const CHAVE_PACOTE = "atual";
 const CHAVE_ULTIMA_SINCRONIZACAO = "ultima-sincronizacao";
@@ -25,6 +26,10 @@ interface EsquemaCampo extends DBSchema {
   visitas_locais: {
     key: string;
     value: VisitaLocal;
+  };
+  config: {
+    key: string;
+    value: unknown;
   };
 }
 
@@ -43,6 +48,9 @@ function abrirBanco(): Promise<IDBPDatabase<EsquemaCampo>> {
       }
       if (!banco.objectStoreNames.contains("visitas_locais")) {
         banco.createObjectStore("visitas_locais", { keyPath: "idLocal" });
+      }
+      if (!banco.objectStoreNames.contains("config")) {
+        banco.createObjectStore("config");
       }
     },
   });
@@ -108,4 +116,68 @@ export async function removerVisitaLocal(idLocal: string): Promise<void> {
   if (!temIndexedDb()) return;
   const banco = await abrirBanco();
   await banco.delete("visitas_locais", idLocal);
+}
+
+/** Dias que uma visita já sincronizada permanece no aparelho por padrão. */
+export const DIAS_RETENCAO_PADRAO = 30;
+
+/**
+ * Decisão pura da limpeza: a visita pode ser removida quando já foi
+ * sincronizada há mais de `diasRetencao` dias (contados de `agora`).
+ * Visitas nunca sincronizadas ficam sempre no aparelho.
+ */
+export function visitaExpirada(
+  visita: Pick<VisitaLocal, "sincronizadaEm">,
+  diasRetencao: number,
+  agora: Date = new Date(),
+): boolean {
+  if (!visita.sincronizadaEm) return false;
+  const sincronizadaEm = new Date(visita.sincronizadaEm).getTime();
+  if (Number.isNaN(sincronizadaEm)) return false;
+  const limite = agora.getTime() - diasRetencao * 24 * 60 * 60 * 1000;
+  return sincronizadaEm < limite;
+}
+
+/**
+ * Remove do aparelho as visitas já sincronizadas há mais de `diasRetencao`
+ * dias, liberando espaço (fotos e assinaturas pesam). Devolve quantas
+ * visitas foram removidas.
+ */
+export async function limparVisitasSincronizadas(
+  diasRetencao: number = DIAS_RETENCAO_PADRAO,
+): Promise<number> {
+  if (!temIndexedDb()) return 0;
+  const agora = new Date();
+  const visitas = await listarVisitasLocais();
+  const expiradas = visitas.filter((v) => visitaExpirada(v, diasRetencao, agora));
+  for (const visita of expiradas) {
+    await removerVisitaLocal(visita.idLocal);
+  }
+  return expiradas.length;
+}
+
+// ------------------------------------------------------------------
+// Configurações do aparelho
+// ------------------------------------------------------------------
+
+export async function gravarConfigLocal(
+  chave: string,
+  valor: unknown,
+): Promise<void> {
+  if (!temIndexedDb()) return;
+  const banco = await abrirBanco();
+  await banco.put("config", valor, chave);
+}
+
+export async function obterConfigLocal<T>(chave: string): Promise<T | null> {
+  if (!temIndexedDb()) return null;
+  const banco = await abrirBanco();
+  const valor = await banco.get("config", chave);
+  return (valor as T | undefined) ?? null;
+}
+
+export async function removerConfigLocal(chave: string): Promise<void> {
+  if (!temIndexedDb()) return;
+  const banco = await abrirBanco();
+  await banco.delete("config", chave);
 }

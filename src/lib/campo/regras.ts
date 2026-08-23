@@ -154,6 +154,21 @@ export function visitasNaFila(visitas: VisitaLocal[]): VisitaLocal[] {
   return visitas.filter((v) => v.concluidaEm !== null && !v.sincronizadaEm);
 }
 
+/** Tamanho em bytes formatado para leitura (ex.: "12,3 MB"). */
+export function formatarBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes < 0) return "—";
+  if (bytes < 1024) return `${Math.round(bytes)} B`;
+  const unidades = ["KB", "MB", "GB", "TB"] as const;
+  let valor = bytes;
+  let unidade: string = "B";
+  for (const proxima of unidades) {
+    valor /= 1024;
+    unidade = proxima;
+    if (valor < 1024) break;
+  }
+  return `${valor.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} ${unidade}`;
+}
+
 /** Saudação conforme a hora local do aparelho. */
 export function saudacaoDoDia(hora: number): string {
   if (hora >= 5 && hora < 12) return "Bom dia";

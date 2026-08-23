@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ItemVersao } from "@/lib/checklists/tipos";
 import {
   calcularDimensoesFoto,
+  formatarBytes,
   fotosDoItem,
   montarPayloadSync,
   progressoVisita,
@@ -221,5 +222,20 @@ describe("saudacaoDoDia", () => {
     expect(saudacaoDoDia(14)).toBe("Boa tarde");
     expect(saudacaoDoDia(20)).toBe("Boa noite");
     expect(saudacaoDoDia(3)).toBe("Boa noite");
+  });
+});
+
+describe("formatarBytes", () => {
+  it("formata os tamanhos na unidade mais legível", () => {
+    expect(formatarBytes(0)).toBe("0 B");
+    expect(formatarBytes(512)).toBe("512 B");
+    expect(formatarBytes(2048)).toBe("2 KB");
+    expect(formatarBytes(12.3 * 1024 * 1024)).toBe("12,3 MB");
+    expect(formatarBytes(3 * 1024 * 1024 * 1024)).toBe("3 GB");
+  });
+
+  it("responde com travessão para valores inválidos", () => {
+    expect(formatarBytes(-1)).toBe("—");
+    expect(formatarBytes(Number.NaN)).toBe("—");
   });
 });
