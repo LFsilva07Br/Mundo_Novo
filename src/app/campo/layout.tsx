@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { BarraAbas } from "@/components/campo/barra-abas";
 import { IndicadorConexao } from "@/components/campo/indicador-conexao";
+import { ManutencaoLocal } from "@/components/campo/manutencao-local";
+import { TelaBloqueio } from "@/components/campo/tela-bloqueio";
 import { RegistrarSw } from "@/components/registrar-sw";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -20,6 +22,8 @@ export default function LayoutCampo({ children }: LayoutProps<"/campo">) {
   return (
     <div className="min-h-dvh bg-background">
       <RegistrarSw />
+      <ManutencaoLocal />
+      <TelaBloqueio />
       <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col">
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
           <div className="flex items-center gap-2">
