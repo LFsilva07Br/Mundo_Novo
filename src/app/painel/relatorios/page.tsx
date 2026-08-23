@@ -22,6 +22,7 @@ import {
   TALHOES_ALTO_DA_SERRA,
 } from "@/lib/carteira/talhoes-demo";
 import { formatarArea } from "@/lib/vencimentos";
+import { BotoesExportar, CartaoRelatorioMensal } from "./exportar";
 
 export const metadata: Metadata = {
   title: "Relatórios",
@@ -53,7 +54,7 @@ export default async function PaginaRelatorios() {
           <h1 className="text-2xl font-extrabold tracking-tight">Relatórios</h1>
         </div>
         <Badge variant="outline">
-          Exportação Excel/PDF chega com o banco conectado
+          Exportação em Excel e PDF, pronta para enviar ao cliente
         </Badge>
       </div>
 
@@ -64,6 +65,10 @@ export default async function PaginaRelatorios() {
             Previsão de colheita por talhão e produtor (sacas de 60 kg), a
             partir da planilha real da cliente.
           </CardDescription>
+          <BotoesExportar
+            base="/api/relatorios/safra"
+            parametros={{ cliente: "alto-da-serra" }}
+          />
         </CardHeader>
         <CardContent>
           <Table>
@@ -174,7 +179,9 @@ export default async function PaginaRelatorios() {
             <CardTitle>Conformidade por cliente</CardTitle>
             <CardDescription>
               Nasce do dado estruturado do checklist — sem apuração manual.
+              Exporta a carteira com certificações e vencimentos.
             </CardDescription>
+            <BotoesExportar base="/api/relatorios/conformidade" />
           </CardHeader>
           <CardContent className="space-y-2.5">
             {clientes
@@ -198,6 +205,43 @@ export default async function PaginaRelatorios() {
               ))}
           </CardContent>
         </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Pacote de auditoria — CAPAs</CardTitle>
+            <CardDescription>
+              Planos de ação com origem, severidade, prazo e status. Para a
+              auditoria externa, o pacote sai só com as CAPAs em aberto.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-1.5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Somente abertas (auditoria externa)
+              </p>
+              <BotoesExportar
+                base="/api/relatorios/capas"
+                parametros={{ ocultar_fechadas: "1" }}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Histórico completo (uso interno)
+              </p>
+              <BotoesExportar
+                base="/api/relatorios/capas"
+                rotuloExcel="Excel completo"
+                rotuloPdf="PDF completo"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <CartaoRelatorioMensal
+          clientes={clientes.map((c) => ({ id: c.id, nome: c.nome }))}
+        />
       </div>
     </div>
   );
