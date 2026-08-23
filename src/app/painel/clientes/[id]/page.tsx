@@ -30,6 +30,7 @@ import { listarVisitas } from "@/lib/checklists/consultas";
 import { formatarArea, formatarData } from "@/lib/vencimentos";
 import { FormularioCliente } from "../formulario-cliente";
 import { AuditoriasCliente } from "./auditorias-cliente";
+import { ConvidarProdutor } from "./convidar-produtor";
 import { ContatosCliente } from "./contatos-cliente";
 import { FormularioRegistroContato } from "./formulario-registro-contato";
 
@@ -88,8 +89,12 @@ export default async function PaginaCliente({
             {grupo ? grupo.nome : "Cliente direto (sem grupo)"}
             {cliente.produtor ? ` · Produtor: ${cliente.produtor}` : null}
           </p>
-          <div className="mt-3">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <FormularioCliente grupos={grupos} cliente={cliente} />
+            <ConvidarProdutor
+              clienteId={cliente.id}
+              nomeSugerido={cliente.produtor}
+            />
           </div>
         </div>
         {typeof cliente.conformidade === "number" ? (

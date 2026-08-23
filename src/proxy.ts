@@ -38,7 +38,8 @@ export async function proxy(request: NextRequest) {
 
   const rotaProtegida =
     request.nextUrl.pathname.startsWith("/painel") ||
-    request.nextUrl.pathname.startsWith("/campo");
+    request.nextUrl.pathname.startsWith("/campo") ||
+    request.nextUrl.pathname.startsWith("/portal");
   const rotaLogin = request.nextUrl.pathname.startsWith("/login");
 
   if (!user && rotaProtegida) {
