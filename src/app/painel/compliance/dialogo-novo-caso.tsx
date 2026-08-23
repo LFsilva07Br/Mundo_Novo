@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { SelectNativo } from "@/components/select-nativo";
 import { criarCaso, type EstadoAcao } from "@/lib/compliance/acoes";
 import { ROTULOS_TIPO_CASO, TIPOS_CASO } from "@/lib/compliance/validacao";
+import { useAvisarResultado } from "@/lib/ui/avisar-resultado";
 
 export type OpcaoClienteCaso = { id: string; nome: string };
 
@@ -31,6 +32,10 @@ export function DialogoNovoCaso({
     criarCaso,
     null,
   );
+  useAvisarResultado(estado, {
+    sucesso: "Caso social aberto — ele entra na fila de tratamento.",
+    aoDarCerto: () => setAberto(false),
+  });
 
   return (
     <>
@@ -116,12 +121,6 @@ export function DialogoNovoCaso({
                 {estado.erro}
               </p>
             ) : null}
-            {estado?.ok ? (
-              <p role="status" className="text-sm font-medium text-primary">
-                {estado.mensagem}
-              </p>
-            ) : null}
-
             <DialogFooter>
               <Button
                 type="button"

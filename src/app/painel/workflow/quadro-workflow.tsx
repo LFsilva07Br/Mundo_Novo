@@ -2,10 +2,13 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, History } from "lucide-react";
+import { ArrowRight, History } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { DialogoConfirmar } from "@/components/dialogo-confirmar";
+import { EstadoVazio } from "@/components/estado-vazio";
 import { moverEtapa } from "@/lib/certificacao/acoes";
 import type {
   MovimentoWorkflow,
@@ -29,7 +32,6 @@ export function QuadroWorkflow({ processos, movimentos, modoDemo }: Props) {
   // conectado ao banco, a revalidação do servidor atualiza as props.
   const [processosLocais, setProcessosLocais] = useState(processos);
   const [movimentosLocais, setMovimentosLocais] = useState(movimentos);
-  const [erro, setErro] = useState<string | null>(null);
   const [pendente, iniciarTransicao] = useTransition();
 
   const processosExibidos = modoDemo ? processosLocais : processos;
@@ -38,7 +40,6 @@ export function QuadroWorkflow({ processos, movimentos, modoDemo }: Props) {
   function avancar(processo: ProcessoCertificacao) {
     const destino = proximaEtapa(processo.etapa);
     if (!destino) return;
-    setErro(null);
 
     if (modoDemo) {
       // Demonstração: simula o movimento localmente, nada é gravado.
@@ -56,24 +57,26 @@ export function QuadroWorkflow({ processos, movimentos, modoDemo }: Props) {
         },
         ...atuais,
       ]);
+      toast.success(
+        `${processo.cliente} avançou para ${ROTULO_ETAPA[destino]}.`,
+      );
       return;
     }
 
     iniciarTransicao(async () => {
       const resultado = await moverEtapa(processo.id, destino);
-      if (!resultado.ok) setErro(resultado.erro);
+      if (resultado.ok) {
+        toast.success(
+          `${processo.cliente} avançou para ${ROTULO_ETAPA[destino]}.`,
+        );
+      } else {
+        toast.error(resultado.erro);
+      }
     });
   }
 
   return (
     <div className="space-y-6">
-      {erro ? (
-        <p className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive">
-          <AlertTriangle className="size-4 shrink-0" />
-          {erro}
-        </p>
-      ) : null}
-
       <div className="grid gap-3 overflow-x-auto md:grid-cols-3 xl:grid-cols-6">
         {ETAPAS_PROCESSO.map((etapa) => {
           const cartoes = processosExibidos.filter((p) => p.etapa === etapa);
@@ -86,7 +89,9 @@ export function QuadroWorkflow({ processos, movimentos, modoDemo }: Props) {
                 </span>
               </p>
               <div className="space-y-2">
-                {cartoes.map((processo) => (
+                {cartoes.map((processo) => {
+                  const destino = proximaEtapa(processo.etapa);
+                  return (
                   <Card key={processo.id} className="shadow-none">
                     <CardContent className="space-y-1.5 p-3">
                       <Link
@@ -106,21 +111,31 @@ export function QuadroWorkflow({ processos, movimentos, modoDemo }: Props) {
                           {processo.observacao}
                         </Badge>
                       ) : null}
-                      {etapa !== "aprovado" ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="w-full"
-                          disabled={pendente}
-                          onClick={() => avancar(processo)}
-                        >
-                          Avançar
-                          <ArrowRight className="size-3.5" />
-                        </Button>
+                      {etapa !== "aprovado" && destino ? (
+                        <DialogoConfirmar
+                          gatilho={
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full"
+                              disabled={pendente}
+                            >
+                              Avançar
+                              <ArrowRight className="size-3.5" />
+                            </Button>
+                          }
+                          titulo={`Avançar ${processo.cliente} para ${ROTULO_ETAPA[destino]}?`}
+                          oQueMuda={`O processo sai de ${ROTULO_ETAPA[processo.etapa]} e passa a valer como ${ROTULO_ETAPA[destino]}. O movimento fica registrado no histórico com data e autor, e voltar exige um novo movimento manual.`}
+                          oQueNaoMuda="As CAPAs abertas, as certificações e os documentos do cliente continuam exatamente como estão — avançar a etapa não fecha pendência nenhuma."
+                          rotuloAcao={`Avançar para ${ROTULO_ETAPA[destino]}`}
+                          pendente={pendente}
+                          aoConfirmar={() => avancar(processo)}
+                        />
                       ) : null}
                     </CardContent>
                   </Card>
-                ))}
+                  );
+                })}
               </div>
             </div>
           );
@@ -133,10 +148,11 @@ export function QuadroWorkflow({ processos, movimentos, modoDemo }: Props) {
           Últimos movimentos
         </p>
         {movimentosExibidos.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Nenhum movimento registrado ainda — ao avançar um cliente, o
-            histórico aparece aqui com data e autor.
-          </p>
+          <EstadoVazio
+            icone={History}
+            titulo="Nenhum movimento registrado ainda."
+            descricao="Ao avançar um cliente de etapa, o histórico aparece aqui com data e autor."
+          />
         ) : (
           <ul className="space-y-2">
             {movimentosExibidos.slice(0, 12).map((movimento) => (

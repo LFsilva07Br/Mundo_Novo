@@ -1,7 +1,15 @@
 "use client";
 
-import { useActionState, useEffect, useId, useRef, useState } from "react";
+import {
+  useActionState,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { MapPlus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DialogoConfirmar } from "@/components/dialogo-confirmar";
 import { enviarMapa, removerMapa, type EstadoMapa } from "@/lib/mapas/acoes";
 import { cn } from "@/lib/utils";
 
@@ -50,9 +59,12 @@ export function FormularioMapa({
 
   const anterior = useRef<EstadoMapa>(null);
   useEffect(() => {
-    if (estado && estado !== anterior.current && estado.ok) aoConcluir?.();
+    if (estado && estado !== anterior.current && estado.ok) {
+      toast.success(`Mapa de ${imovelNome} enviado e desenhado no visor.`);
+      aoConcluir?.();
+    }
     anterior.current = estado;
-  }, [estado, aoConcluir]);
+  }, [estado, aoConcluir, imovelNome]);
 
   return (
     <form action={despachar} className="space-y-4">
@@ -132,28 +144,39 @@ export function BotaoRemoverMapa({
   mapaId: string;
   nome: string;
 }) {
-  const [estado, despachar, pendente] = useActionState<EstadoMapa, FormData>(
-    () => removerMapa(mapaId),
-    null,
-  );
+  const [pendente, iniciarTransicao] = useTransition();
+
+  function remover() {
+    iniciarTransicao(async () => {
+      const resultado = await removerMapa(mapaId);
+      if (resultado.ok) {
+        toast.success(`Mapa “${nome}” removido do imóvel.`);
+      } else {
+        toast.error(resultado.mensagem);
+      }
+    });
+  }
 
   return (
-    <form action={despachar} className="inline-flex items-center gap-2">
-      <Button
-        type="submit"
-        variant="ghost"
-        size="icon-sm"
-        disabled={pendente}
-        aria-label={`Remover mapa ${nome}`}
-        className="text-muted-foreground hover:text-destructive"
-      >
-        <Trash2 />
-      </Button>
-      {estado && !estado.ok ? (
-        <span role="alert" className="text-xs font-medium text-destructive">
-          {estado.mensagem}
-        </span>
-      ) : null}
-    </form>
+    <DialogoConfirmar
+      gatilho={
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          disabled={pendente}
+          aria-label={`Remover mapa ${nome}`}
+          className="text-muted-foreground hover:text-destructive"
+        >
+          <Trash2 />
+        </Button>
+      }
+      titulo={`Remover o mapa “${nome}”?`}
+      oQueMuda="O mapa sai do visor do imóvel e o arquivo enviado é apagado. Para ter o desenho de volta é preciso enviar o KML de novo."
+      oQueNaoMuda="O imóvel, o CAR, as matrículas, os talhões e os documentos continuam cadastrados — só o desenho no mapa sai."
+      rotuloAcao="Remover mapa"
+      destrutivo
+      pendente={pendente}
+      aoConfirmar={remover}
+    />
   );
 }

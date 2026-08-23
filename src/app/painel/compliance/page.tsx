@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { MessageCircle, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -16,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EstadoVazio, EstadoVazioLinha } from "@/components/estado-vazio";
 import { listarClientes } from "@/lib/carteira/consultas";
 import {
   CLIENTE_PADRAO_COMPLIANCE,
@@ -248,15 +250,12 @@ export default async function PaginaCompliance({
                 </TableHeader>
                 <TableBody>
                   {casos.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={6}
-                        className="text-center text-sm text-muted-foreground"
-                      >
-                        Nenhum caso social registrado — bom sinal, desde que o
-                        monitoramento esteja ativo.
-                      </TableCell>
-                    </TableRow>
+                    <EstadoVazioLinha
+                      colunas={6}
+                      icone={ShieldCheck}
+                      titulo="Nenhum caso social registrado."
+                      descricao="Bom sinal, desde que o monitoramento esteja ativo."
+                    />
                   ) : null}
                   {casos.map((caso) => (
                     <TableRow key={caso.id}>
@@ -311,9 +310,11 @@ export default async function PaginaCompliance({
               </CardHeader>
               <CardContent className="space-y-3">
                 {queixas.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    Nenhuma queixa recebida até agora.
-                  </p>
+                  <EstadoVazio
+                    semMoldura
+                    icone={MessageCircle}
+                    titulo="Nenhuma queixa recebida até agora."
+                  />
                 ) : null}
                 {queixas.map((queixa) => (
                   <div key={queixa.id} className="space-y-2 rounded-xl border p-3">

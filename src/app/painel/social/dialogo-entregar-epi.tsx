@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { entregarEpi } from "@/lib/social/epis";
 import { EPIS_SUGERIDOS } from "@/lib/social/regras";
 import type { EstadoAcao } from "@/lib/social/acoes";
+import { useAvisarResultado } from "@/lib/ui/avisar-resultado";
 
 export type OpcaoTrabalhadorEpi = { id: string; nome: string };
 
@@ -36,6 +37,10 @@ export function DialogoEntregarEpi({
   const [assinatura, setAssinatura] = useState<string | null>(null);
   const [estado, setEstado] = useState<EstadoAcao>(null);
   const [pendente, iniciarTransicao] = useTransition();
+  useAvisarResultado(estado, {
+    sucesso: "Entrega de EPI registrada na ficha do colaborador.",
+    aoDarCerto: () => setAberto(false),
+  });
 
   function enviar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
@@ -147,12 +152,6 @@ export function DialogoEntregarEpi({
                 {estado.erro}
               </p>
             ) : null}
-            {estado?.ok ? (
-              <p role="status" className="text-sm font-medium text-primary">
-                {estado.mensagem}
-              </p>
-            ) : null}
-
             <DialogFooter>
               <Button
                 type="button"

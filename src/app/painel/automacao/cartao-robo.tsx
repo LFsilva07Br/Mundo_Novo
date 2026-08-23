@@ -1,4 +1,5 @@
 import { Bot, ExternalLink } from "lucide-react";
+import { EstadoVazio } from "@/components/estado-vazio";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -67,9 +68,12 @@ export async function CartaoRobo() {
       </CardHeader>
       <CardContent className="space-y-2">
         {execucoes.length === 0 ? (
-          <Badge variant="outline">
-            Nenhuma execução registrada ainda — a primeira roda às 06:00
-          </Badge>
+          <EstadoVazio
+            semMoldura
+            icone={Bot}
+            titulo="Nenhuma execução registrada ainda."
+            descricao="A primeira varredura automática de vencimentos roda às 06:00."
+          />
         ) : (
           execucoes.map((e) => (
             <div

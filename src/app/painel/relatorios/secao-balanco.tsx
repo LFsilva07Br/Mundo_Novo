@@ -1,3 +1,4 @@
+import { Scale } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -14,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { EstadoVazioLinha } from "@/components/estado-vazio";
 import type { BalancoCliente } from "@/lib/prontidao/balanco";
 
 const numero = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 });
@@ -55,6 +57,14 @@ export function SecaoBalanco({ balancos }: { balancos: BalancoCliente[] }) {
             </TableRow>
           </TableHeader>
           <TableBody>
+            {balancos.length === 0 ? (
+              <EstadoVazioLinha
+                colunas={5}
+                icone={Scale}
+                titulo="Nenhum balanço de volume para esta safra."
+                descricao="O balanço aparece quando houver previsão de safra nos talhões e lotes registrados na comercialização."
+              />
+            ) : null}
             {balancos.map((b) => (
               <TableRow
                 key={b.clienteId}

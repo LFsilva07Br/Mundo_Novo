@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Info, MailPlus } from "lucide-react";
+import { Info, MailPlus, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Toaster } from "@/components/ui/sonner";
+import { DialogoConfirmar } from "@/components/dialogo-confirmar";
+import { EstadoVazioLinha } from "@/components/estado-vazio";
 import { atualizarPerfil, reenviarConvite } from "@/lib/equipe/acoes";
 import {
   PAPEIS,
@@ -151,6 +153,14 @@ export function TabelaUsuarios({
             </TableRow>
           </TableHeader>
           <TableBody>
+            {perfis.length === 0 ? (
+              <EstadoVazioLinha
+                colunas={6}
+                icone={Users}
+                titulo="Nenhuma pessoa na equipe ainda."
+                descricao="Convide o primeiro integrante para que ele possa registrar visitas e responder CAPAs."
+              />
+            ) : null}
             {perfis.map((perfil) => {
               const pendente = idPendente === perfil.id;
               return (
@@ -227,17 +237,36 @@ export function TabelaUsuarios({
                       >
                         <MailPlus />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        className={
-                          perfil.ativo ? "text-destructive" : undefined
-                        }
-                        disabled={!podeEditar || pendente}
-                        onClick={() => aoMudarAtivo(perfil)}
-                      >
-                        {perfil.ativo ? "Desativar" : "Reativar"}
-                      </Button>
+                      {perfil.ativo ? (
+                        <DialogoConfirmar
+                          gatilho={
+                            <Button
+                              variant="ghost"
+                              size="xs"
+                              className="text-destructive"
+                              disabled={!podeEditar || pendente}
+                            >
+                              Desativar
+                            </Button>
+                          }
+                          titulo={`Desativar o acesso de ${perfil.nome || perfil.email}?`}
+                          oQueMuda="A pessoa perde o acesso ao painel e ao app de campo na hora, e some das listas de responsável em novas atribuições."
+                          oQueNaoMuda="Tudo o que ela registrou continua no sistema: visitas, laudos assinados, CAPAs e a trilha de auditoria. Você pode reativar o acesso a qualquer momento por este mesmo botão."
+                          rotuloAcao="Desativar acesso"
+                          destrutivo
+                          pendente={pendente}
+                          aoConfirmar={() => aoMudarAtivo(perfil)}
+                        />
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          disabled={!podeEditar || pendente}
+                          onClick={() => aoMudarAtivo(perfil)}
+                        >
+                          Reativar
+                        </Button>
+                      )}
                     </span>
                   </TableCell>
                 </TableRow>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { FileDown } from "lucide-react";
+import { FileDown, HardHat, Home, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { BadgeVencimento } from "@/components/badge-vencimento";
 import { buttonVariants } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { EstadoVazio, EstadoVazioLinha } from "@/components/estado-vazio";
 import { listarClientes } from "@/lib/carteira/consultas";
 import {
   CLIENTE_PADRAO_SOCIAL,
@@ -182,14 +183,11 @@ export default async function PaginaSocial({
             </TableHeader>
             <TableBody>
               {trabalhadores.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    className="text-center text-sm text-muted-foreground"
-                  >
-                    Nenhum trabalhador cadastrado para este cliente.
-                  </TableCell>
-                </TableRow>
+                <EstadoVazioLinha
+                  colunas={7}
+                  icone={Users}
+                  titulo="Nenhum trabalhador cadastrado para este cliente."
+                />
               ) : null}
               {trabalhadores.map((t) => (
                 <TableRow key={t.id}>
@@ -280,14 +278,11 @@ export default async function PaginaSocial({
             </TableHeader>
             <TableBody>
               {fichasEpi.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="text-center text-sm text-muted-foreground"
-                  >
-                    Nenhuma entrega de EPI registrada para este cliente.
-                  </TableCell>
-                </TableRow>
+                <EstadoVazioLinha
+                  colunas={6}
+                  icone={HardHat}
+                  titulo="Nenhuma entrega de EPI registrada para este cliente."
+                />
               ) : null}
               {fichasEpi.map((f) => (
                 <TableRow key={f.id}>
@@ -386,9 +381,10 @@ export default async function PaginaSocial({
             </CardHeader>
             <CardContent className="space-y-3">
               {moradias.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Nenhuma moradia cadastrada para este cliente.
-                </p>
+                <EstadoVazio
+                  icone={Home}
+                  titulo="Nenhuma moradia cadastrada para este cliente."
+                />
               ) : null}
               {moradias.map((m) => (
                 <div key={m.id} className="rounded-xl border p-3">

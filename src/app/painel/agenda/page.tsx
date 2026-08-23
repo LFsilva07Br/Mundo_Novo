@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { EstadoVazio } from "@/components/estado-vazio";
 import { createClient } from "@/lib/supabase/server";
 import { formatarData } from "@/lib/vencimentos";
 import { concluirTarefa, executarMotorAgora } from "./acoes";
@@ -83,11 +84,15 @@ export default async function PaginaAgenda() {
         </CardHeader>
         <CardContent className="space-y-3">
           {tarefas.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">
-              {supabase
-                ? "Nenhuma tarefa pendente — use “Rodar motor agora” para varrer os vencimentos."
-                : "Banco não conectado — as tarefas aparecem no ambiente publicado."}
-            </p>
+            <EstadoVazio
+              semMoldura
+              icone={CalendarClock}
+              titulo={
+                supabase
+                  ? "Nenhuma tarefa pendente — use “Rodar motor agora” para varrer os vencimentos."
+                  : "Banco não conectado — as tarefas aparecem no ambiente publicado."
+              }
+            />
           ) : (
             tarefas.map((tarefa) => {
               const origem = ROTULO_ORIGEM[tarefa.origem] ?? ROTULO_ORIGEM.manual;

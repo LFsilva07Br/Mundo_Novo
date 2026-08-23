@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Droplets } from "lucide-react";
+import { ArrowLeft, Droplets, MapPin, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { BadgeVencimento } from "@/components/badge-vencimento";
 import {
@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { EstadoVazio } from "@/components/estado-vazio";
 import { listarGrupos, obterCliente } from "@/lib/carteira/consultas";
 import { listarRegistrosContato } from "@/lib/carteira/registros";
 import {
@@ -243,10 +244,11 @@ export default async function PaginaCliente({
               </TableBody>
             </Table>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              Nenhum contato registrado ainda — use “Novo registro” para
-              começar o histórico.
-            </p>
+            <EstadoVazio
+              semMoldura
+              icone={Users}
+              titulo="Nenhum contato registrado ainda — use “Novo registro” para começar o histórico."
+            />
           )}
         </CardContent>
       </Card>
@@ -318,10 +320,10 @@ export default async function PaginaCliente({
           </CardContent>
         </Card>
       ) : (
-        <p className="text-sm text-muted-foreground">
-          Os imóveis rurais e talhões deste cliente serão cadastrados nas
-          próximas entregas da Fase 1.
-        </p>
+        <EstadoVazio
+          icone={MapPin}
+          titulo="Os imóveis rurais e talhões deste cliente serão cadastrados nas próximas entregas da Fase 1."
+        />
       )}
     </div>
   );

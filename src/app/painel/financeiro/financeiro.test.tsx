@@ -10,8 +10,13 @@ import {
   type ContratoFinanceiro,
   type Fatura,
 } from "@/lib/financeiro/regras";
+import { toast } from "sonner";
 import { FormularioContratoFinanceiro } from "./dialogos";
 import { VisaoFinanceiro } from "./visao-financeiro";
+
+vi.mock("sonner", () => ({
+  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
+}));
 
 vi.mock("@/lib/financeiro/acoes", () => ({
   criarContratoFinanceiro: vi.fn(),
@@ -242,7 +247,7 @@ describe("VisaoFinanceiro — faturas do mês", () => {
     expect(await screen.findByText("Copiado!")).toBeInTheDocument();
   });
 
-  it("gerar faturas do mês mostra o retorno da ação", async () => {
+  it("gerar faturas do mês avisa o erro devolvido pela ação", async () => {
     const usuario = userEvent.setup();
     renderizarVisao();
 
@@ -253,7 +258,24 @@ describe("VisaoFinanceiro — faturas do mês", () => {
     await waitFor(() => {
       expect(gerarFaturasDoMes).toHaveBeenCalledWith("2026-08");
     });
-    expect(await screen.findByText("Pré-ativação.")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Pré-ativação.");
+    });
+  });
+
+  it("registrar pagamento avisa o sucesso em linguagem de negócio", async () => {
+    const usuario = userEvent.setup();
+    renderizarVisao();
+
+    await usuario.click(
+      screen.getByRole("button", { name: "Registrar pagamento" }),
+    );
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith(
+        expect.stringContaining("Fazenda Tecoara"),
+      );
+    });
   });
 });
 

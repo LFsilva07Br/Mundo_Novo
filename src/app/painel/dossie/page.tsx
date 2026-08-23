@@ -1,7 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import {
+  Award,
+  ClipboardCheck,
+  FileText,
+  GraduationCap,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { BadgeVencimento } from "@/components/badge-vencimento";
+import { EstadoVazio } from "@/components/estado-vazio";
 import {
   Card,
   CardContent,
@@ -89,9 +98,11 @@ export default async function PaginaDossie({
     clientes.find((c) => c.id === parametroCliente) ?? clientes[0];
   if (!cliente) {
     return (
-      <p className="text-sm text-muted-foreground">
-        Nenhum cliente na carteira ainda.
-      </p>
+      <EstadoVazio
+        icone={Users}
+        titulo="Nenhum cliente na carteira ainda."
+        descricao="Cadastre um cliente na carteira para começar a montar o dossiê."
+      />
     );
   }
 
@@ -143,9 +154,12 @@ export default async function PaginaDossie({
         </CardHeader>
         <CardContent>
           {cliente.certificacoes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhuma certificação cadastrada.
-            </p>
+            <EstadoVazio
+              semMoldura
+              icone={Award}
+              titulo="Nenhuma certificação cadastrada."
+              descricao="As normas do cliente aparecem aqui assim que forem cadastradas, com certificadora e vencimento."
+            />
           ) : (
             <Table>
               <TableHeader>
@@ -190,9 +204,12 @@ export default async function PaginaDossie({
         </CardHeader>
         <CardContent>
           {visitasConcluidas.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhuma visita concluída até aqui.
-            </p>
+            <EstadoVazio
+              semMoldura
+              icone={ClipboardCheck}
+              titulo="Nenhuma visita concluída até aqui."
+              descricao="Assim que uma visita de campo ou escritório for concluída, ela aparece aqui com a conformidade apurada."
+            />
           ) : (
             <Table>
               <TableHeader>
@@ -253,9 +270,11 @@ export default async function PaginaDossie({
         </CardHeader>
         <CardContent>
           {capas.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhuma CAPA para mostrar — bom sinal.
-            </p>
+            <EstadoVazio
+              semMoldura
+              icone={ShieldCheck}
+              titulo="Nenhuma CAPA para mostrar — bom sinal."
+            />
           ) : (
             <Table>
               <TableHeader>
@@ -310,9 +329,12 @@ export default async function PaginaDossie({
         </CardHeader>
         <CardContent className="space-y-5">
           {imoveis.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhum imóvel cadastrado.
-            </p>
+            <EstadoVazio
+              semMoldura
+              icone={FileText}
+              titulo="Nenhum imóvel cadastrado."
+              descricao="CAR, matrícula, licenças e outorgas aparecem aqui após o cadastro do imóvel rural."
+            />
           ) : (
             imoveis.map((imovel) => (
               <div key={imovel.id} className="space-y-2">
@@ -376,9 +398,12 @@ export default async function PaginaDossie({
         </CardHeader>
         <CardContent>
           {treinamentos.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhum treinamento cadastrado.
-            </p>
+            <EstadoVazio
+              semMoldura
+              icone={GraduationCap}
+              titulo="Nenhum treinamento cadastrado."
+              descricao="A cobertura da equipe aparece aqui após o primeiro treinamento registrado."
+            />
           ) : (
             <Table>
               <TableHeader>

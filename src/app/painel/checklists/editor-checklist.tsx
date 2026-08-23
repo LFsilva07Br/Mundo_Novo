@@ -4,7 +4,9 @@ import { useState, useTransition } from "react";
 import {
   AlertTriangle,
   Camera,
+  ClipboardList,
   FileText,
+  ListChecks,
   Lock,
   Minus,
   Plus,
@@ -31,6 +33,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DialogoConfirmar } from "@/components/dialogo-confirmar";
+import { EstadoVazio } from "@/components/estado-vazio";
 import {
   adicionarItem,
   atualizarItem,
@@ -58,9 +62,11 @@ export function EditorChecklist({ checklist }: Props) {
 
   if (!versaoExibida) {
     return (
-      <div className="mx-auto max-w-3xl rounded-xl border p-8 text-center text-sm text-muted-foreground">
-        Este checklist ainda não tem nenhuma versão.
-      </div>
+      <EstadoVazio
+        className="mx-auto max-w-3xl"
+        icone={ClipboardList}
+        titulo="Este checklist ainda não tem nenhuma versão."
+      />
     );
   }
 
@@ -204,8 +210,12 @@ export function EditorChecklist({ checklist }: Props) {
           )
         ) : (
           <Card className="h-fit">
-            <CardContent className="p-6 text-sm text-muted-foreground">
-              Nenhum item nesta versão ainda.
+            <CardContent className="p-6">
+              <EstadoVazio
+                semMoldura
+                icone={ListChecks}
+                titulo="Nenhum item nesta versão ainda."
+              />
             </CardContent>
           </Card>
         )}
@@ -551,38 +561,23 @@ function DialogPublicar({
   pendente: boolean;
   aoConfirmar: () => void;
 }) {
-  const [aberto, setAberto] = useState(false);
-
   return (
-    <Dialog open={aberto} onOpenChange={setAberto}>
-      <DialogTrigger render={<Button />}>Publicar versão</DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Publicar a versão v{numero}?</DialogTitle>
-          <DialogDescription>
-            A versão v{numero} passa a valer imediatamente e chega ao app de
-            campo após a publicação.
-            {numeroPublicada !== null
-              ? ` A versão publicada atual (v${numeroPublicada}) será arquivada.`
-              : ""}{" "}
-            Visitas já iniciadas continuam na versão em que começaram.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <DialogClose render={<Button variant="outline" />}>
-            Cancelar
-          </DialogClose>
-          <Button
-            disabled={pendente}
-            onClick={() => {
-              aoConfirmar();
-              setAberto(false);
-            }}
-          >
-            Publicar v{numero}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <DialogoConfirmar
+      gatilho={<Button>Publicar versão</Button>}
+      titulo={`Publicar a versão v${numero}?`}
+      oQueMuda={
+        <>
+          A versão v{numero} passa a valer imediatamente e chega ao app de campo
+          após a publicação.
+          {numeroPublicada !== null
+            ? ` A versão publicada atual (v${numeroPublicada}) será arquivada.`
+            : ""}
+        </>
+      }
+      oQueNaoMuda="Visitas já iniciadas continuam na versão em que começaram."
+      rotuloAcao={`Publicar v${numero}`}
+      pendente={pendente}
+      aoConfirmar={aoConfirmar}
+    />
   );
 }

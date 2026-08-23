@@ -2,13 +2,14 @@
 
 import { useMemo, useState, useTransition } from "react";
 import {
-  AlertTriangle,
   ChevronDown,
   ChevronRight,
+  ClipboardList,
   MessageCircle,
   Plus,
   ShieldCheck,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +38,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DialogoConfirmar } from "@/components/dialogo-confirmar";
+import { EstadoVazio, EstadoVazioLinha } from "@/components/estado-vazio";
 import {
   concluirAcaoCapa,
   criarCapa,
@@ -83,7 +86,6 @@ export function VisaoCapas({ capas, clientes, modoDemo }: Props) {
   // conectado ao banco, a revalidação do servidor atualiza as props.
   const [capasLocais, setCapasLocais] = useState(capas);
   const [expandidas, setExpandidas] = useState<Set<string>>(new Set());
-  const [erro, setErro] = useState<string | null>(null);
   const [dialogoAberto, setDialogoAberto] = useState(false);
   const [pendente, iniciarTransicao] = useTransition();
 
@@ -108,7 +110,6 @@ export function VisaoCapas({ capas, clientes, modoDemo }: Props) {
   }
 
   function marcarAcao(capaId: string, acaoId: string, concluida: boolean) {
-    setErro(null);
     if (modoDemo) {
       setCapasLocais((atuais) =>
         atuais.map((capa) =>
@@ -134,14 +135,21 @@ export function VisaoCapas({ capas, clientes, modoDemo }: Props) {
     }
     iniciarTransicao(async () => {
       const resultado = await concluirAcaoCapa(acaoId, concluida);
-      if (!resultado.ok) setErro(resultado.erro);
+      if (resultado.ok) {
+        toast.success(
+          concluida
+            ? "Ação marcada como concluída no plano."
+            : "Ação reaberta no plano.",
+        );
+      } else {
+        toast.error(resultado.erro);
+      }
     });
   }
 
   function fechar(capa: Capa) {
-    setErro(null);
     if (!podeFecharCapa(capa.acoes)) {
-      setErro(
+      toast.error(
         "A CAPA só fecha com todas as ações concluídas — ainda há ação pendente.",
       );
       return;
@@ -152,16 +160,22 @@ export function VisaoCapas({ capas, clientes, modoDemo }: Props) {
           c.id === capa.id ? { ...c, status: "fechada" as const } : c,
         ),
       );
+      toast.success(`CAPA #${capa.numero} fechada e registrada como resolvida.`);
       return;
     }
     iniciarTransicao(async () => {
       const resultado = await fecharCapa(capa.id);
-      if (!resultado.ok) setErro(resultado.erro);
+      if (resultado.ok) {
+        toast.success(
+          `CAPA #${capa.numero} fechada e registrada como resolvida.`,
+        );
+      } else {
+        toast.error(resultado.erro);
+      }
     });
   }
 
   function aoCriar(dados: DadosNovaCapa) {
-    setErro(null);
     if (modoDemo) {
       const numero = Math.max(...capasExibidas.map((c) => c.numero), 0) + 1;
       const cliente = clientes.find((c) => c.id === dados.clienteId);
@@ -192,15 +206,22 @@ export function VisaoCapas({ capas, clientes, modoDemo }: Props) {
         ...atuais,
       ]);
       setDialogoAberto(false);
+      toast.success(
+        `CAPA #${numero} aberta para ${cliente?.nome ?? "o cliente"} — responsável ${dados.responsavel}.`,
+      );
       return;
     }
     iniciarTransicao(async () => {
       const resultado = await criarCapa(dados);
       if (!resultado.ok) {
-        setErro(resultado.erro);
+        toast.error(resultado.erro);
         return;
       }
       setDialogoAberto(false);
+      const cliente = clientes.find((c) => c.id === dados.clienteId);
+      toast.success(
+        `CAPA aberta para ${cliente?.nome ?? "o cliente"} — responsável ${dados.responsavel}, prazo ${dados.prazo}.`,
+      );
     });
   }
 
@@ -232,13 +253,6 @@ export function VisaoCapas({ capas, clientes, modoDemo }: Props) {
           todas as ações do plano estiverem concluídas.
         </p>
       </div>
-
-      {erro ? (
-        <p className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive">
-          <AlertTriangle className="size-4 shrink-0" />
-          {erro}
-        </p>
-      ) : null}
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <Card>
@@ -292,6 +306,14 @@ export function VisaoCapas({ capas, clientes, modoDemo }: Props) {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {capasExibidas.length === 0 ? (
+                <EstadoVazioLinha
+                  colunas={8}
+                  icone={ShieldCheck}
+                  titulo="Nenhuma CAPA registrada."
+                  descricao="Toda não conformidade encontrada em visita vira uma CAPA aqui automaticamente. Você também pode abrir uma manualmente em “Nova CAPA”."
+                />
+              ) : null}
               {capasExibidas.map((capa) => {
                 const expandida = expandidas.has(capa.id);
                 const pendentes = capa.acoes.filter((a) => !a.concluida).length;
@@ -455,9 +477,12 @@ function CapaLinhas({
                   : " · tudo concluído"}
               </p>
               {capa.acoes.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Nenhuma ação cadastrada neste plano ainda.
-                </p>
+                <EstadoVazio
+                  icone={ClipboardList}
+                  titulo="Nenhuma ação cadastrada neste plano ainda."
+                  descricao="Sem ação no plano, a CAPA não pode ser fechada."
+                  className="py-6"
+                />
               ) : (
                 <ul className="space-y-1.5">
                   {capa.acoes.map((acao) => (
@@ -494,13 +519,19 @@ function CapaLinhas({
               />
               <div className="flex flex-wrap items-center gap-2">
                 {capa.status !== "fechada" ? (
-                  <Button
-                    size="sm"
-                    disabled={pendentes > 0 || ocupado}
-                    onClick={aoFechar}
-                  >
-                    Fechar CAPA
-                  </Button>
+                  <DialogoConfirmar
+                    gatilho={
+                      <Button size="sm" disabled={pendentes > 0 || ocupado}>
+                        Fechar CAPA
+                      </Button>
+                    }
+                    titulo={`Fechar a CAPA #${capa.numero}?`}
+                    oQueMuda={`A não conformidade de ${capa.cliente} passa a valer como resolvida e sai da lista de pendências do cliente. Os lembretes de prazo para ${capa.responsavel} param de ser enviados. Reabrir depois exige abrir uma nova CAPA.`}
+                    oQueNaoMuda="As ações concluídas, as evidências anexadas e a data de cada uma continuam guardadas — é esse conjunto que a certificadora consulta na auditoria."
+                    rotuloAcao="Fechar CAPA"
+                    pendente={ocupado}
+                    aoConfirmar={aoFechar}
+                  />
                 ) : null}
                 {linkCobranca ? (
                   <Button

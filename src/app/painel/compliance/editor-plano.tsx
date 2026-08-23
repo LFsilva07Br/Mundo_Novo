@@ -14,6 +14,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { SelectNativo } from "@/components/select-nativo";
 import { salvarPlanoGestao, type EstadoAcao } from "@/lib/compliance/acoes";
+import { useAvisarResultado } from "@/lib/ui/avisar-resultado";
+import { EstadoVazio } from "@/components/estado-vazio";
 import {
   NIVEIS_RISCO,
   ROTULOS_NIVEL_RISCO,
@@ -63,6 +65,9 @@ export function EditorPlano({
     salvarPlanoGestao,
     null,
   );
+  useAvisarResultado(estado, {
+    sucesso: `Plano de gestão ${ano} salvo com os riscos e as metas informados.`,
+  });
 
   const anoAtual = new Date().getFullYear();
   const anos = [anoAtual - 1, anoAtual, anoAtual + 1];
@@ -155,9 +160,10 @@ export function EditorPlano({
         </CardHeader>
         <CardContent className="space-y-3">
           {riscos.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhum risco listado ainda — comece adicionando o primeiro.
-            </p>
+            <EstadoVazio
+              titulo="Nenhum risco listado ainda."
+              descricao="Comece adicionando o primeiro risco — é ele que justifica as metas do plano."
+            />
           ) : null}
           {riscos.map((risco, indice) => (
             <div
@@ -243,9 +249,7 @@ export function EditorPlano({
         </CardHeader>
         <CardContent className="space-y-3">
           {metas.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhuma meta cadastrada ainda para este ano.
-            </p>
+            <EstadoVazio titulo="Nenhuma meta cadastrada ainda para este ano." />
           ) : null}
           {metas.map((meta, indice) => (
             <div
@@ -325,12 +329,6 @@ export function EditorPlano({
           {estado.erro}
         </p>
       ) : null}
-      {estado?.ok ? (
-        <p role="status" className="text-sm font-medium text-primary">
-          {estado.mensagem}
-        </p>
-      ) : null}
-
       <Button type="submit" disabled={pendente}>
         {pendente ? "Salvando…" : `Salvar plano ${ano}`}
       </Button>

@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { EstadoVazio } from "@/components/estado-vazio";
 import { listarClientes } from "@/lib/carteira/consultas";
 import { listarImoveisDoCliente } from "@/lib/carteira/imoveis-consultas";
 import { formatarCentroide, montarPacoteEudr } from "@/lib/eudr/dados";
@@ -53,9 +54,11 @@ export default async function PaginaEudr({
         <h1 className="text-2xl font-extrabold tracking-tight">
           EUDR — Geolocalização
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Nenhum cliente cadastrado ainda.
-        </p>
+        <EstadoVazio
+          className="mt-2"
+          icone={Globe2}
+          titulo="Nenhum cliente cadastrado ainda."
+        />
       </div>
     );
   }
@@ -188,9 +191,11 @@ export default async function PaginaEudr({
         </CardHeader>
         <CardContent className="overflow-x-auto">
           {pacote.imoveis.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhum imóvel rural cadastrado para este cliente.
-            </p>
+            <EstadoVazio
+              semMoldura
+              icone={Globe2}
+              titulo="Nenhum imóvel rural cadastrado para este cliente."
+            />
           ) : (
             <Table>
               <TableHeader>

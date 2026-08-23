@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Recycle, SprayCan } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -15,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { EstadoVazio, EstadoVazioLinha } from "@/components/estado-vazio";
 import { listarClientes } from "@/lib/carteira/consultas";
 import { listarTalhoes } from "@/lib/carteira/imoveis-consultas";
 import { listarTrabalhadores } from "@/lib/social/consultas";
@@ -231,14 +233,11 @@ export default async function PaginaAgro({
             </TableHeader>
             <TableBody>
               {aplicacoes.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    className="text-center text-sm text-muted-foreground"
-                  >
-                    Nenhuma aplicação registrada para este cliente.
-                  </TableCell>
-                </TableRow>
+                <EstadoVazioLinha
+                  colunas={7}
+                  icone={SprayCan}
+                  titulo="Nenhuma aplicação registrada para este cliente."
+                />
               ) : null}
               {aplicacoes.map((a) => (
                 <TableRow key={a.id}>
@@ -290,9 +289,10 @@ export default async function PaginaAgro({
           </CardHeader>
           <CardContent className="space-y-3">
             {destinacoes.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Nenhuma destinação registrada para este cliente.
-              </p>
+              <EstadoVazio
+                icone={Recycle}
+                titulo="Nenhuma destinação registrada para este cliente."
+              />
             ) : null}
             {destinacoes.map((d) => (
               <div

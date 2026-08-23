@@ -1,3 +1,4 @@
+import { TrendingUp } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -13,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { EstadoVazio, EstadoVazioLinha } from "@/components/estado-vazio";
 import type { SerieConformidade } from "@/lib/prontidao/historico";
 
 export type ClienteBenchmark = {
@@ -58,6 +60,13 @@ export function SecaoEvolucao({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {series.length === 0 ? (
+          <EstadoVazio
+            icone={TrendingUp}
+            titulo="Nenhuma evolução de conformidade para mostrar."
+            descricao="As curvas aparecem a partir da segunda visita concluída de cada cliente."
+          />
+        ) : null}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {series.map((serie) => (
             <div
@@ -107,6 +116,14 @@ export function SecaoEvolucao({
               </TableRow>
             </TableHeader>
             <TableBody>
+              {ranking.length === 0 ? (
+                <EstadoVazioLinha
+                  colunas={4}
+                  icone={TrendingUp}
+                  titulo="Sem conformidade apurada para comparar."
+                  descricao="O benchmarking nasce das visitas concluídas — conclua ao menos uma visita com checklist respondido."
+                />
+              ) : null}
               {ranking.map((cliente, indice) => {
                 const diferenca = cliente.conformidade - media;
                 return (

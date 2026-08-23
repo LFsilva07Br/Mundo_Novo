@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { ClipboardList } from "lucide-react";
+import { EstadoVazio } from "@/components/estado-vazio";
 import {
   listarChecklists,
   obterChecklistAtual,
@@ -32,10 +34,12 @@ export default async function PaginaChecklists({
       {checklist ? (
         <EditorChecklist key={checklist.id} checklist={checklist} />
       ) : (
-        <div className="mx-auto max-w-3xl rounded-xl border p-8 text-center text-sm text-muted-foreground">
-          Nenhum checklist cadastrado ainda — crie um a partir da biblioteca de
-          normas.
-        </div>
+        <EstadoVazio
+          className="mx-auto max-w-3xl"
+          icone={ClipboardList}
+          titulo="Nenhum checklist cadastrado ainda."
+          descricao="Crie um checklist a partir da biblioteca de normas."
+        />
       )}
     </div>
   );

@@ -1,3 +1,4 @@
+import { ClipboardCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -14,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { EstadoVazio } from "@/components/estado-vazio";
 import { ROTULO_ORIGEM, type VisitaResumo } from "@/lib/checklists/tipos";
 import { formatarData } from "@/lib/vencimentos";
 
@@ -69,10 +71,11 @@ export function AuditoriasCliente({ visitas }: { visitas: VisitaResumo[] }) {
             </TableBody>
           </Table>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            Nenhuma auditoria concluída ainda — as visitas de checklist
-            finalizadas aparecerão aqui.
-          </p>
+          <EstadoVazio
+            semMoldura
+            icone={ClipboardCheck}
+            titulo="Nenhuma auditoria concluída ainda — as visitas de checklist finalizadas aparecerão aqui."
+          />
         )}
       </CardContent>
     </Card>
