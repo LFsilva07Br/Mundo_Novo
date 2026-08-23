@@ -6,6 +6,8 @@ import {
   segundaFeiraDaSemana,
   type DadosResumoSemanal,
 } from "@/lib/alertas/resumo";
+import { emailsDosGestores } from "@/lib/email/destinatarios";
+import { enviarEmail, type ClienteEnvios } from "@/lib/email/remetente";
 
 /**
  * Resumo semanal do gestor.
@@ -114,14 +116,32 @@ export async function GET(request: Request) {
     tarefaCriada = !error;
   }
 
-  // O HTML do e-mail já é gerado aqui; o envio será plugado quando o
-  // serviço de e-mail estiver configurado (ver src/lib/alertas/resumo.ts).
+  // Envia o resumo por e-mail aos gestores/diretoria (perfis internos com
+  // e-mail). Cada envio fica registrado em envios_email; falha de e-mail
+  // nunca derruba o cron.
   const html = montarResumoHtml(dados);
+  const { data: perfis } = await supabase.from("perfis").select("*");
+  const gestores = emailsDosGestores(perfis ?? []);
+  let emailsEnviados = 0;
+  for (const para of gestores) {
+    const resultado = await enviarEmail(
+      {
+        para,
+        assunto: `Resumo semanal da carteira — semana de ${dados.semana}`,
+        html,
+        origem: "resumo-semanal",
+      },
+      supabase as unknown as ClienteEnvios,
+    );
+    if (resultado.enviado) emailsEnviados += 1;
+  }
 
   return NextResponse.json({
     resumo: dados,
     tarefa_criada: tarefaCriada,
     html_gerado: html.length > 0,
+    destinatarios: gestores.length,
+    emails_enviados: emailsEnviados,
     executado_em: new Date().toISOString(),
   });
 }

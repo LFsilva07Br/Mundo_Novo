@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { marcoAtingido } from "@/lib/gatilhos";
 import { diasAte } from "@/lib/vencimentos";
+import { emailsDosContatos, emailsDosGestores } from "@/lib/email/destinatarios";
+import { montarAlertaHtml } from "@/lib/email/modelos";
+import { enviarEmail, type ClienteEnvios } from "@/lib/email/remetente";
+
+/** Limite defensivo de e-mails por execução do cron. */
+const MAX_EMAILS_POR_EXECUCAO = 20;
 
 /**
  * Motor de gatilhos por proximidade de data.
@@ -151,18 +157,77 @@ export async function GET(request: Request) {
     });
   }
 
-  // Materializa (upsert ignorando repetidos — alerta único por regra+vencimento)
-  let criadas = 0;
+  // Materializa (upsert ignorando repetidos — alerta único por regra+vencimento).
+  // O .select() devolve apenas as linhas de fato inseridas: com
+  // ignoreDuplicates, um alerta já existente volta vazio — assim sabemos
+  // quais tarefas são NOVAS e merecem e-mail.
+  const novas: (typeof tarefas)[number][] = [];
   for (const tarefa of tarefas) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("tarefas")
-      .upsert(tarefa, { onConflict: "regra,cliente_id,vence_em", ignoreDuplicates: true });
-    if (!error) criadas += 1;
+      .upsert(tarefa, { onConflict: "regra,cliente_id,vence_em", ignoreDuplicates: true })
+      .select("id");
+    if (!error && (data?.length ?? 0) > 0) novas.push(tarefa);
+  }
+
+  // E-mail de alerta para cada tarefa NOVA de cliente: vai aos contatos por
+  // área do cliente; sem contato com e-mail, fica registrado para os
+  // gestores. Limite defensivo por execução; falha de e-mail nunca
+  // interrompe o motor.
+  let emailsProcessados = 0;
+  let emailsEnviados = 0;
+  let limiteAtingido = false;
+  const cacheContatos = new Map<string, string[]>();
+  let gestores: string[] | null = null;
+
+  for (const tarefa of novas) {
+    if (!tarefa.cliente_id) continue;
+    if (emailsProcessados >= MAX_EMAILS_POR_EXECUCAO) {
+      limiteAtingido = true;
+      break;
+    }
+
+    let destinatarios = cacheContatos.get(tarefa.cliente_id);
+    if (!destinatarios) {
+      const { data: contatos } = await supabase
+        .from("contatos_cliente")
+        .select("email")
+        .eq("cliente_id", tarefa.cliente_id)
+        .not("email", "is", null);
+      destinatarios = emailsDosContatos(contatos ?? []);
+      cacheContatos.set(tarefa.cliente_id, destinatarios);
+    }
+
+    if (destinatarios.length === 0) {
+      // Fallback: registra o alerta para os gestores internos.
+      if (gestores === null) {
+        const { data: perfis } = await supabase.from("perfis").select("*");
+        gestores = emailsDosGestores(perfis ?? []);
+      }
+      destinatarios = gestores;
+    }
+
+    const html = montarAlertaHtml(tarefa);
+    for (const para of destinatarios) {
+      if (emailsProcessados >= MAX_EMAILS_POR_EXECUCAO) {
+        limiteAtingido = true;
+        break;
+      }
+      emailsProcessados += 1;
+      const resultado = await enviarEmail(
+        { para, assunto: tarefa.titulo, html, origem: "gatilho" },
+        supabase as unknown as ClienteEnvios,
+      );
+      if (resultado.enviado) emailsEnviados += 1;
+    }
   }
 
   return NextResponse.json({
     avaliadas: tarefas.length,
-    processadas: criadas,
+    processadas: novas.length,
+    emails_processados: emailsProcessados,
+    emails_enviados: emailsEnviados,
+    limite_emails_atingido: limiteAtingido,
     executado_em: new Date().toISOString(),
   });
 }
