@@ -2,17 +2,29 @@
 
 import { useRouter } from "next/navigation";
 import { use, useEffect, useRef, useState } from "react";
-import { Camera, Check, CheckCircle2, MapPin, Send, X } from "lucide-react";
+import {
+  AlertTriangle,
+  Camera,
+  Check,
+  CheckCircle2,
+  ImageOff,
+  MapPin,
+  Send,
+  X,
+} from "lucide-react";
 import { QuadroAssinatura } from "@/components/assinatura/quadro-assinatura";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { obterVisitaLocal, salvarVisitaLocal } from "@/lib/campo/banco-local";
+import { obterVisitaLocal } from "@/lib/campo/banco-local";
+import { gravarVisita } from "@/lib/campo/gravacao";
 import { copiarArquivosSelecionados } from "@/lib/campo/anexar-fotos";
 import { capturarGps, redimensionarFoto } from "@/lib/campo/midia";
 import { obterOuBaixarPacote } from "@/lib/campo/pacote";
 import {
+  aplicarResposta,
+  divergenciaDeVersao,
   fotosDoItem,
   progressoVisita,
   validarConclusaoCampo,
@@ -42,7 +54,10 @@ export default function PaginaVisita({
   // seguidos) nunca leem um estado defasado do React.
   const visitaRef = useRef<VisitaLocal | null>(null);
   const [itens, setItens] = useState<ItemVersao[]>([]);
+  const [versaoAtualId, setVersaoAtualId] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
+  // Falha de gravação no aparelho: fica na tela até salvar de novo.
+  const [falhaGravacao, setFalhaGravacao] = useState<string | null>(null);
   const [etapa, setEtapa] = useState<"execucao" | "resumo">("execucao");
   const [pendencias, setPendencias] = useState<PendenciaConclusao[]>([]);
   const [gpsFim, setGpsFim] = useState<string | null>(null);
@@ -56,37 +71,32 @@ export default function PaginaVisita({
         visitaRef.current = visitaLocal;
         setVisita(visitaLocal);
         setItens(pacote?.checklist?.publicada?.itens ?? []);
+        setVersaoAtualId(pacote?.checklist?.publicada?.id ?? null);
         setCarregando(false);
       },
     );
   }, [id]);
 
-  /** Grava no IndexedDB a cada mudança — o rascunho é contínuo. */
+  /**
+   * Grava no IndexedDB a cada mudança — o rascunho é contínuo. Toda falha
+   * de gravação vira aviso permanente na tela: nunca falha em silêncio.
+   */
   function atualizar(mudar: (atual: VisitaLocal) => VisitaLocal) {
     const atual = visitaRef.current;
     if (!atual) return;
     const nova = mudar(atual);
     visitaRef.current = nova;
     setVisita(nova);
-    void salvarVisitaLocal(nova);
+    void gravarVisita(nova).then((resultado) => {
+      setFalhaGravacao(resultado.ok ? null : resultado.mensagem);
+    });
   }
 
   function responder(item: ItemVersao, resposta: Resposta) {
-    atualizar((atual) => {
-      const anterior = atual.respostas.find((r) => r.itemId === item.id);
-      return {
-        ...atual,
-        respostas: [
-          ...atual.respostas.filter((r) => r.itemId !== item.id),
-          {
-            itemId: item.id,
-            resposta,
-            descricao:
-              resposta === "nao_conforme" ? (anterior?.descricao ?? "") : null,
-          },
-        ],
-      };
-    });
+    atualizar((atual) => ({
+      ...atual,
+      respostas: aplicarResposta(atual.respostas, item.id, resposta),
+    }));
   }
 
   function descrever(item: ItemVersao, descricao: string) {
@@ -149,7 +159,15 @@ export default function PaginaVisita({
       gpsFim,
       assinatura: { dataUrl: assinaturaDataUrl, nome: nomeAssinante.trim() },
     };
-    await salvarVisitaLocal(concluida);
+    const gravou = await gravarVisita(concluida);
+    if (!gravou.ok) {
+      // Sem gravação não há fila de envio: não deixe o consultor sair da
+      // tela achando que a visita foi fechada.
+      setFalhaGravacao(gravou.mensagem);
+      setFinalizando(false);
+      return;
+    }
+    setFalhaGravacao(null);
     visitaRef.current = concluida;
     setVisita(concluida);
     if (typeof navigator !== "undefined" && navigator.onLine) {
@@ -199,18 +217,55 @@ export default function PaginaVisita({
   }
 
   const progresso = progressoVisita(itens, visita.respostas);
+  const divergencia = divergenciaDeVersao(visita, versaoAtualId, itens);
+
+  /**
+   * Aviso permanente de falha ao salvar no aparelho. Não é um toast que some:
+   * fica na tela até a próxima gravação dar certo.
+   */
+  const avisoGravacao = falhaGravacao ? (
+    <div
+      role="alert"
+      aria-live="assertive"
+      className="sticky top-[57px] z-30 -mx-4 flex items-start gap-2 border-y border-destructive bg-destructive px-4 py-3 text-sm font-bold text-white"
+    >
+      <AlertTriangle className="mt-0.5 size-5 shrink-0" />
+      <span>{falhaGravacao}</span>
+    </div>
+  ) : null;
+
+  const avisoVersao = divergencia.divergente ? (
+    <div
+      role="alert"
+      className="rounded-2xl border border-warning bg-warning/15 p-4 text-xs font-bold text-warning"
+    >
+      <p className="flex items-center gap-2 text-sm">
+        <AlertTriangle className="size-4 shrink-0" />
+        O checklist mudou depois que esta visita começou
+      </p>
+      <p className="mt-1.5 font-semibold">
+        {divergencia.respostasOrfas > 0 || divergencia.fotosOrfas > 0
+          ? `${divergencia.respostasOrfas} resposta${divergencia.respostasOrfas === 1 ? "" : "s"} e ${divergencia.fotosOrfas} foto${divergencia.fotosOrfas === 1 ? "" : "s"} desta visita são de itens da versão anterior. Nada foi apagado do aparelho, mas esses itens não aparecem na lista abaixo.`
+          : "A lista de itens abaixo é de uma versão mais nova que a usada no início da visita."}{" "}
+        Conclua e sincronize esta visita antes de começar outra, e avise o
+        escritório.
+      </p>
+    </div>
+  ) : null;
 
   if (etapa === "resumo") {
     const conformidade = calcularConformidade(visita.respostas);
     const ncs = visita.respostas.filter((r) => r.resposta === "nao_conforme");
     return (
       <div className="space-y-4">
+        {avisoGravacao}
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">Resumo da visita</h1>
           <p className="text-sm text-muted-foreground">
             {visita.titulo} — {visita.clienteNome}
           </p>
         </div>
+        {avisoVersao}
 
         <div className="grid grid-cols-3 gap-3">
           <Card className="rounded-2xl">
@@ -299,12 +354,14 @@ export default function PaginaVisita({
 
   return (
     <div className="space-y-4">
+      {avisoGravacao}
       <div>
         <h1 className="text-xl font-extrabold leading-tight tracking-tight">
           {visita.titulo}
         </h1>
         <p className="text-sm text-muted-foreground">{visita.clienteNome}</p>
       </div>
+      {avisoVersao}
 
       <div className="sticky top-[57px] z-20 -mx-4 space-y-1 border-b border-border bg-background/95 px-4 py-2 backdrop-blur">
         <div className="flex items-center justify-between text-xs font-bold">
@@ -391,10 +448,17 @@ function CartaoItem({
   aoAnexarFotos: (item: ItemVersao, arquivos: FileList | null) => void;
   aoRemoverFoto: (item: ItemVersao, indice: number) => void;
 }) {
+  const [confirmandoRemocao, setConfirmandoRemocao] = useState<number | null>(
+    null,
+  );
   const resposta = visita.respostas.find((r) => r.itemId === item.id);
   const fotos = fotosDoItem(visita.fotos, item.id);
   const ehNc = resposta?.resposta === "nao_conforme";
   const tamanho = tamanhoDescricao(resposta?.descricao);
+  // Fora da NC, descrição e fotos ficam guardadas no aparelho — o consultor
+  // precisa saber que elas existem e que NÃO serão enviadas assim.
+  const descricaoGuardada = !ehNc ? (resposta?.descricaoGuardada ?? null) : null;
+  const guardadas = !ehNc && (fotos.length > 0 || Boolean(descricaoGuardada));
 
   return (
     <Card
@@ -426,7 +490,8 @@ function CartaoItem({
                 aria-pressed={ativa}
                 onClick={() => aoResponder(item, opcao.valor)}
                 className={cn(
-                  "rounded-xl border px-2 py-2.5 text-xs font-bold transition-colors disabled:opacity-40",
+                  // Alvo de toque de 48px: dedo com luva, sob sol, em pé.
+                  "min-h-12 rounded-xl border px-2 py-2.5 text-sm font-bold transition-colors disabled:opacity-40",
                   ativa
                     ? opcao.valor === "nao_conforme"
                       ? "border-destructive bg-destructive/10 text-destructive"
@@ -498,14 +563,40 @@ function CartaoItem({
                         alt={`Evidência ${indice + 1} do item ${item.codigo}`}
                         className="aspect-square w-full rounded-lg object-cover"
                       />
-                      <button
-                        type="button"
-                        aria-label={`Remover evidência ${indice + 1}`}
-                        onClick={() => aoRemoverFoto(item, indice)}
-                        className="absolute right-1 top-1 rounded-full bg-background/90 p-1 text-foreground shadow"
-                      >
-                        <X className="size-3" />
-                      </button>
+                      {confirmandoRemocao === indice ? (
+                        // Apagar evidência é irreversível: confirma antes.
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-lg bg-background/95 p-1">
+                          <p className="text-center text-[10px] font-bold leading-tight">
+                            Apagar esta foto?
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setConfirmandoRemocao(null);
+                              aoRemoverFoto(item, indice);
+                            }}
+                            className="min-h-8 w-full rounded-md bg-destructive px-1 text-[11px] font-bold text-white"
+                          >
+                            Apagar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmandoRemocao(null)}
+                            className="min-h-8 w-full rounded-md border border-border bg-card px-1 text-[11px] font-bold"
+                          >
+                            Manter
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          aria-label={`Remover evidência ${indice + 1}`}
+                          onClick={() => setConfirmandoRemocao(indice)}
+                          className="absolute right-0.5 top-0.5 flex size-9 items-center justify-center rounded-full bg-background/90 text-foreground shadow"
+                        >
+                          <X className="size-4" />
+                        </button>
+                      )}
                       {foto.gps ? (
                         <span className="absolute bottom-1 left-1 rounded bg-background/80 px-1 text-[9px] font-bold">
                           GPS ✓
@@ -516,6 +607,20 @@ function CartaoItem({
                 </div>
               ) : null}
             </div>
+          </div>
+        ) : guardadas ? (
+          <div
+            role="status"
+            className="flex items-start gap-2 rounded-xl border border-warning/50 bg-warning/10 p-3 text-xs font-semibold text-warning"
+          >
+            <ImageOff className="mt-0.5 size-4 shrink-0" />
+            <span>
+              {fotos.length > 0
+                ? `${fotos.length} foto${fotos.length === 1 ? "" : "s"} ${descricaoGuardada ? "e a descrição escrita " : ""}deste item continuam guardadas no aparelho`
+                : "A descrição escrita continua guardada no aparelho"}
+              , mas não serão enviadas ao escritório enquanto a resposta não
+              for “Não conforme”. Volte para “Não conforme” para usá-las.
+            </span>
           </div>
         ) : null}
       </CardContent>

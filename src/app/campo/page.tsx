@@ -11,6 +11,7 @@ import {
   Zap,
 } from "lucide-react";
 import { BadgeVencimento } from "@/components/badge-vencimento";
+import { ConviteInstalacao } from "@/components/campo/convite-instalacao";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { listarVisitasLocais } from "@/lib/campo/banco-local";
@@ -82,11 +83,13 @@ export default function PaginaInicioCampo() {
         <Link
           href="/campo/ajustes"
           aria-label="Ajustes"
-          className="mt-1 flex size-9 shrink-0 items-center justify-center rounded-xl border border-border text-muted-foreground transition-colors hover:text-foreground"
+          className="mt-1 flex size-11 shrink-0 items-center justify-center rounded-xl border border-border text-muted-foreground transition-colors hover:text-foreground"
         >
-          <Settings className="size-4" />
+          <Settings className="size-5" />
         </Link>
       </div>
+
+      <ConviteInstalacao />
 
       {!pacote ? (
         <Card className="rounded-3xl">

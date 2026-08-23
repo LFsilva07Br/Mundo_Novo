@@ -4,9 +4,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /** Ajustes do aparelho: biometria, espaço usado e limpeza manual. */
 
-const { estado, notificacoes } = vi.hoisted(() => ({
+const { estado, notificacoes, armazenamento } = vi.hoisted(() => ({
   estado: { disponivel: true, ativada: false },
   notificacoes: { permissao: "default" as string },
+  armazenamento: { persistido: true, concede: true },
 }));
 
 vi.mock("@/lib/notificacoes/local", () => ({
@@ -54,6 +55,8 @@ beforeEach(() => {
   estado.disponivel = true;
   estado.ativada = false;
   notificacoes.permissao = "default";
+  armazenamento.persistido = true;
+  armazenamento.concede = true;
   Object.defineProperty(navigator, "storage", {
     configurable: true,
     value: {
@@ -61,6 +64,8 @@ beforeEach(() => {
         usage: 12.3 * 1024 * 1024,
         quota: 3 * 1024 * 1024 * 1024,
       })),
+      persisted: vi.fn(async () => armazenamento.persistido),
+      persist: vi.fn(async () => armazenamento.concede),
     },
   });
 });
@@ -137,6 +142,42 @@ describe("Ajustes do campo", () => {
       expect.stringContaining("teste"),
       expect.any(String),
     );
+  });
+
+  it("mostra que o armazenamento das visitas está protegido", async () => {
+    render(<PaginaAjustesCampo />);
+
+    expect(
+      await screen.findByText("Armazenamento protegido"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/não vai apagar as visitas deste aparelho/),
+    ).toBeInTheDocument();
+  });
+
+  it("alerta quando o navegador não protege o armazenamento", async () => {
+    armazenamento.persistido = false;
+    armazenamento.concede = false;
+    render(<PaginaAjustesCampo />);
+
+    expect(
+      await screen.findByText("Armazenamento sem proteção"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/pode apagar visitas ainda não enviadas/),
+    ).toBeInTheDocument();
+  });
+
+  it("explica quando o navegador não informa a proteção", async () => {
+    Object.defineProperty(navigator, "storage", {
+      configurable: true,
+      value: { estimate: vi.fn(async () => ({ usage: 0, quota: 0 })) },
+    });
+    render(<PaginaAjustesCampo />);
+
+    expect(
+      await screen.findByText("Proteção desconhecida"),
+    ).toBeInTheDocument();
   });
 
   it("limpa as visitas já sincronizadas na hora (retenção zero)", async () => {

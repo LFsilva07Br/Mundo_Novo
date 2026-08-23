@@ -33,6 +33,12 @@ export type RespostaLocal = {
   itemId: string;
   resposta: Resposta;
   descricao: string | null;
+  /**
+   * Descrição da não conformidade guardada quando o consultor troca a
+   * resposta para conforme/N.A. — nada digitado se perde e o texto volta
+   * sozinho se ele voltar para "não conforme". Nunca vai ao servidor.
+   */
+  descricaoGuardada?: string | null;
 };
 
 export type FotoLocal = {
@@ -72,6 +78,13 @@ export type VisitaLocal = {
   erroSincronizacao: string | null;
 };
 
+/** Resposta como ela viaja ao servidor — sem os rascunhos do aparelho. */
+export type RespostaSync = {
+  itemId: string;
+  resposta: Resposta;
+  descricao: string | null;
+};
+
 /** Corpo enviado ao POST /api/campo/sync (uma visita por chamada). */
 export type PayloadSync = {
   idLocal: string;
@@ -82,7 +95,7 @@ export type PayloadSync = {
   concluidaEm: string;
   gpsInicio: string | null;
   gpsFim: string | null;
-  respostas: RespostaLocal[];
+  respostas: RespostaSync[];
   fotos: FotoLocal[];
   assinatura: AssinaturaLocal | null;
 };

@@ -31,11 +31,12 @@ export function BarraAbas() {
               href={rota}
               aria-current={ativa ? "page" : undefined}
               className={cn(
-                "flex flex-col items-center gap-1 py-2.5 text-[11px] font-bold transition-colors",
+                // Alvo de toque de 56px de altura: dedo com luva, em pé.
+                "flex min-h-14 flex-col items-center justify-center gap-1 py-2 text-[11px] font-bold transition-colors",
                 ativa ? "text-primary" : "text-muted-foreground hover:text-foreground",
               )}
             >
-              <Icone className="size-5" />
+              <Icone className="size-6" />
               {rotulo}
             </Link>
           );

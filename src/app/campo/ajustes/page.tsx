@@ -1,10 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Bell, BellRing, Fingerprint, HardDrive, Trash2 } from "lucide-react";
+import {
+  Bell,
+  BellRing,
+  Fingerprint,
+  HardDrive,
+  ShieldCheck,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  garantirArmazenamentoPersistente,
+  TEXTO_ARMAZENAMENTO,
+  type EstadoArmazenamento,
+} from "@/lib/campo/armazenamento";
 import { limparVisitasSincronizadas } from "@/lib/campo/banco-local";
 import {
   biometriaAtivada,
@@ -50,17 +62,23 @@ export default function PaginaAjustesCampo() {
   const [limpando, setLimpando] = useState(false);
   const [permissao, setPermissao] = useState<EstadoPermissao>("unsupported");
   const [ativandoNotificacoes, setAtivandoNotificacoes] = useState(false);
+  const [protecao, setProtecao] = useState<EstadoArmazenamento | null>(null);
 
   const carregar = useCallback(
     () =>
-      Promise.all([biometriaDisponivel(), biometriaAtivada(), estimarEspaco()]).then(
-        ([suporte, estado, estimativa]) => {
-          setDisponivel(suporte);
-          setAtivada(estado);
-          setEspaco(estimativa);
-          setPermissao(estadoPermissao());
-        },
-      ),
+      Promise.all([
+        biometriaDisponivel(),
+        biometriaAtivada(),
+        estimarEspaco(),
+        // Idempotente: só pede de novo se ainda não estiver persistente.
+        garantirArmazenamentoPersistente(),
+      ]).then(([suporte, estado, estimativa, armazenamento]) => {
+        setDisponivel(suporte);
+        setAtivada(estado);
+        setEspaco(estimativa);
+        setProtecao(armazenamento);
+        setPermissao(estadoPermissao());
+      }),
     [],
   );
 
@@ -238,6 +256,41 @@ export default function PaginaAjustesCampo() {
               </Button>
             </>
           )}
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-3xl">
+        <CardContent className="space-y-3 p-5">
+          <div className="flex items-center gap-2">
+            <ShieldCheck
+              className={
+                protecao === "persistente"
+                  ? "size-4 text-success"
+                  : "size-4 text-warning"
+              }
+            />
+            <h2 className="text-sm font-extrabold">
+              Proteção das visitas no aparelho
+            </h2>
+          </div>
+          <p
+            className={
+              protecao === "persistente"
+                ? "text-sm font-semibold text-success"
+                : "text-sm font-semibold text-warning"
+            }
+          >
+            {protecao === null
+              ? "Verificando…"
+              : protecao === "persistente"
+                ? "Armazenamento protegido"
+                : protecao === "temporario"
+                  ? "Armazenamento sem proteção"
+                  : "Proteção desconhecida"}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {protecao === null ? "" : TEXTO_ARMAZENAMENTO[protecao]}
+          </p>
         </CardContent>
       </Card>
 
