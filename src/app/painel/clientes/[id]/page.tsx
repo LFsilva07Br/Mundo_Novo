@@ -185,6 +185,7 @@ export default async function PaginaCliente({
 
       <ContatosCliente
         clienteId={cliente.id}
+        clienteNome={cliente.nome}
         contatos={cliente.contatos ?? []}
       />
 

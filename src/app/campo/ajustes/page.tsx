@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Fingerprint, HardDrive, Trash2 } from "lucide-react";
+import { Bell, BellRing, Fingerprint, HardDrive, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +14,13 @@ import {
   registrarBiometria,
 } from "@/lib/campo/biometria";
 import { formatarBytes } from "@/lib/campo/regras";
+import {
+  estadoPermissao,
+  guardarAssinaturaPush,
+  notificar,
+  pedirPermissao,
+  type EstadoPermissao,
+} from "@/lib/notificacoes/local";
 
 /**
  * Ajustes do aparelho: trava por biometria (opcional, local) e manutenção
@@ -41,6 +48,8 @@ export default function PaginaAjustesCampo() {
   const [processando, setProcessando] = useState(false);
   const [espaco, setEspaco] = useState<EspacoAparelho | null>(null);
   const [limpando, setLimpando] = useState(false);
+  const [permissao, setPermissao] = useState<EstadoPermissao>("unsupported");
+  const [ativandoNotificacoes, setAtivandoNotificacoes] = useState(false);
 
   const carregar = useCallback(
     () =>
@@ -49,6 +58,7 @@ export default function PaginaAjustesCampo() {
           setDisponivel(suporte);
           setAtivada(estado);
           setEspaco(estimativa);
+          setPermissao(estadoPermissao());
         },
       ),
     [],
@@ -83,6 +93,36 @@ export default function PaginaAjustesCampo() {
     } finally {
       setProcessando(false);
     }
+  }
+
+  async function ativarNotificacoes() {
+    setAtivandoNotificacoes(true);
+    try {
+      const resultado = await pedirPermissao();
+      setPermissao(resultado);
+      if (resultado === "granted") {
+        toast.success("Notificações ativadas neste aparelho!");
+        // Push de servidor: assina quando a chave VAPID estiver configurada;
+        // sem a chave, o aviso explica que as locais já bastam por enquanto.
+        const assinatura = await guardarAssinaturaPush();
+        if (!assinatura.ok) toast.info(assinatura.aviso);
+      } else if (resultado === "denied") {
+        toast.error(
+          "O navegador bloqueou as notificações — libere nas permissões do site.",
+        );
+      }
+    } finally {
+      setAtivandoNotificacoes(false);
+    }
+  }
+
+  async function notificacaoDeTeste() {
+    const mostrou = await notificar(
+      "Notificação de teste — Mundo Novo",
+      "Tudo certo! É assim que os novos alertas vão aparecer.",
+    );
+    if (mostrou) toast.success("Notificação de teste enviada.");
+    else toast.error("Não foi possível mostrar a notificação neste aparelho.");
   }
 
   async function limparAgora() {
@@ -147,6 +187,57 @@ export default function PaginaAjustesCampo() {
               Biometria ativada neste aparelho.
             </p>
           ) : null}
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-3xl">
+        <CardContent className="space-y-3 p-5">
+          <div className="flex items-center gap-2">
+            <Bell className="size-4 text-primary" />
+            <h2 className="text-sm font-extrabold">Notificações no aparelho</h2>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Receba um aviso quando o pacote de dados trouxer novos alertas da
+            Mundo Novo — mesmo com o app em segundo plano.
+          </p>
+          {permissao === "unsupported" ? (
+            <p className="text-sm font-semibold text-warning">
+              Este aparelho ou navegador não oferece notificações.
+            </p>
+          ) : permissao === "granted" ? (
+            <>
+              <p className="text-xs font-semibold text-primary">
+                Notificações ativadas neste aparelho.
+              </p>
+              <Button
+                onClick={notificacaoDeTeste}
+                variant="outline"
+                className="w-full gap-2"
+              >
+                <BellRing className="size-4" />
+                Enviar notificação de teste
+              </Button>
+            </>
+          ) : (
+            <>
+              {permissao === "denied" ? (
+                <p className="text-sm font-semibold text-warning">
+                  O navegador está bloqueando as notificações — libere nas
+                  permissões do site e tente de novo.
+                </p>
+              ) : null}
+              <Button
+                onClick={ativarNotificacoes}
+                disabled={ativandoNotificacoes}
+                className="w-full gap-2"
+              >
+                <Bell className="size-4" />
+                {ativandoNotificacoes
+                  ? "Aguarde…"
+                  : "Ativar notificações no aparelho"}
+              </Button>
+            </>
+          )}
         </CardContent>
       </Card>
 

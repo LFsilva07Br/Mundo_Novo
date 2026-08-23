@@ -17,7 +17,7 @@ import type {
 const SELECT_CLIENTE = `
   id, grupo_id, nome, tipo, fase, produtor, cidade, uf, regiao, conformidade,
   certificacoes ( norma, certificadora, principal, status, vence_em ),
-  contatos_cliente ( nome, area ),
+  contatos_cliente ( nome, area, telefone, email ),
   imoveis_rurais (
     nome, proprietarios, car, matriculas,
     area_total_ha, area_cafe_ha, area_app_ha, area_reserva_ha,
@@ -43,7 +43,12 @@ type LinhaCliente = {
     status: Certificacao["status"];
     vence_em: string | null;
   }[];
-  contatos_cliente: { nome: string; area: ContatoCliente["area"] }[];
+  contatos_cliente: {
+    nome: string;
+    area: ContatoCliente["area"];
+    telefone: string | null;
+    email: string | null;
+  }[];
   imoveis_rurais: {
     nome: string;
     proprietarios: string | null;
@@ -89,7 +94,12 @@ function paraCliente(linha: LinhaCliente): Cliente {
       venceEm: c.vence_em ?? undefined,
     })),
     contatos: linha.contatos_cliente.length
-      ? linha.contatos_cliente
+      ? linha.contatos_cliente.map((c) => ({
+          nome: c.nome,
+          area: c.area,
+          telefone: c.telefone ?? undefined,
+          email: c.email ?? undefined,
+        }))
       : undefined,
     imoveis: imoveis.length ? imoveis : undefined,
   };

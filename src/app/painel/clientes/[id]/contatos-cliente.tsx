@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useRef, useTransition } from "react";
-import { Trash2, UserPlus } from "lucide-react";
+import { MessageCircle, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,13 +31,16 @@ import {
   ROTULO_AREA_CONTATO,
   type ContatoCliente as Contato,
 } from "@/lib/carteira/tipos";
+import { linkWhatsApp, mensagemContatoPadrao } from "@/lib/whatsapp";
 
 /** Gerência de contatos por área: lista, adiciona e remove. */
 export function ContatosCliente({
   clienteId,
+  clienteNome,
   contatos,
 }: {
   clienteId: string;
+  clienteNome: string;
   contatos: Contato[];
 }) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -81,7 +84,7 @@ export function ContatosCliente({
               <TableRow>
                 <TableHead>Contato</TableHead>
                 <TableHead>Área</TableHead>
-                <TableHead className="w-10">
+                <TableHead className="w-20">
                   <span className="sr-only">Ações</span>
                 </TableHead>
               </TableRow>
@@ -101,6 +104,33 @@ export function ContatosCliente({
                   </TableCell>
                   <TableCell>{ROTULO_AREA_CONTATO[contato.area]}</TableCell>
                   <TableCell>
+                    {(() => {
+                      const link = contato.telefone
+                        ? linkWhatsApp(
+                            contato.telefone,
+                            mensagemContatoPadrao({
+                              contato: contato.nome,
+                              cliente: clienteNome,
+                            }),
+                          )
+                        : null;
+                      return link ? (
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Chamar ${contato.nome} no WhatsApp`}
+                          render={
+                            <a
+                              href={link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            />
+                          }
+                        >
+                          <MessageCircle className="size-3.5 text-success" />
+                        </Button>
+                      ) : null;
+                    })()}
                     <Button
                       variant="ghost"
                       size="icon-sm"

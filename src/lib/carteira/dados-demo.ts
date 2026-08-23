@@ -54,9 +54,13 @@ export const CLIENTES_DEMO: Cliente[] = [
       },
     ],
     contatos: [
-      { nome: "Silvio Dutra", area: "proprietario" },
+      { nome: "Silvio Dutra", area: "proprietario", telefone: "(35) 99999-0001" },
       { nome: "Tâmara Isa da Silva", area: "ambiental" },
-      { nome: "Winicius Baquião Dutra", area: "agricola" },
+      {
+        nome: "Winicius Baquião Dutra",
+        area: "agricola",
+        telefone: "(35) 99999-0002",
+      },
     ],
     imoveis: [
       {

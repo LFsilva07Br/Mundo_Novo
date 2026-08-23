@@ -76,6 +76,35 @@ describe("Planos de ação — CAPA", () => {
     ).toBeInTheDocument();
   });
 
+  it("oferece a cobrança por WhatsApp quando o contato do cliente tem telefone", async () => {
+    const usuario = userEvent.setup();
+    const comTelefone = [{ ...CLIENTES[0], telefone: "(35) 99999-0001" }];
+    render(<VisaoCapas capas={capas} clientes={comTelefone} modoDemo={true} />);
+
+    await usuario.click(
+      screen.getByRole("button", { name: /Expandir CAPA #131/ }),
+    );
+
+    const link = screen.getByRole("link", { name: /Cobrar por WhatsApp/ });
+    expect(link).toHaveAttribute(
+      "href",
+      expect.stringContaining("https://wa.me/5535999990001?text="),
+    );
+  });
+
+  it("sem telefone no contato, não mostra a cobrança por WhatsApp", async () => {
+    const usuario = userEvent.setup();
+    render(<VisaoCapas capas={capas} clientes={CLIENTES} modoDemo={true} />);
+
+    await usuario.click(
+      screen.getByRole("button", { name: /Expandir CAPA #131/ }),
+    );
+
+    expect(
+      screen.queryByRole("link", { name: /Cobrar por WhatsApp/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it("abre o diálogo de Nova CAPA com responsável e prazo obrigatórios", async () => {
     const usuario = userEvent.setup();
     render(<VisaoCapas capas={capas} clientes={CLIENTES} modoDemo={true} />);
