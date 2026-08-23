@@ -8,8 +8,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { listarConfiguracoes } from "@/lib/alertas/consultas";
+import { listarClientes } from "@/lib/carteira/consultas";
+import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { DISPAROS_PADRAO_DIAS } from "@/lib/vencimentos";
 import { cn } from "@/lib/utils";
+import { OverridesClientes } from "./overrides-clientes";
 
 export const metadata: Metadata = {
   title: "Alertas & Automação",
@@ -45,7 +49,13 @@ const GATILHOS_EVENTO = [
   },
 ];
 
-export default function PaginaAutomacao() {
+export default async function PaginaAutomacao() {
+  const modoDemo = !hasSupabaseEnv();
+  const [configuracoes, clientes] = await Promise.all([
+    listarConfiguracoes(),
+    listarClientes(),
+  ]);
+
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div>
@@ -135,6 +145,12 @@ export default function PaginaAutomacao() {
           </CardContent>
         </Card>
       </div>
+
+      <OverridesClientes
+        configuracoes={configuracoes}
+        clientes={clientes.map((c) => ({ id: c.id, nome: c.nome }))}
+        modoDemo={modoDemo}
+      />
 
       <Card>
         <CardHeader>
