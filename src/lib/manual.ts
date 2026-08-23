@@ -354,6 +354,155 @@ export const TELAS_MANUAL: TelaManual[] = [
     ],
   },
   {
+    id: "compliance",
+    titulo: "Compliance social",
+    rota: "/painel/compliance",
+    resumo:
+      "Casos sociais (avaliar-e-tratar), fila de queixas e plano de gestão anual.",
+    passos: [
+      "No menu, em Operação, clique em Compliance social.",
+      "Na aba Casos, registre situações apuradas — para encerrar um caso o sistema exige descrever a remediação.",
+      "Na aba Queixas, veja os relatos recebidos pelo canal público e transforme-os em caso quando necessário.",
+      "Na aba Plano de gestão, monte a avaliação de risco e as metas do ano para cada cliente.",
+    ],
+    dicas: [
+      "Use “Copiar link do canal de queixas” para imprimir o cartaz que fica na fazenda.",
+    ],
+  },
+  {
+    id: "planejamento",
+    titulo: "Planejamento anual de visitas",
+    rota: "/painel/planejamento",
+    resumo:
+      "Grade de clientes por mês para garantir a cobertura de 100% da carteira no ano.",
+    passos: [
+      "No menu, em Operação, clique em Planejamento anual.",
+      "Clique numa célula (cliente × mês) para definir quando a auditoria será feita.",
+      "O selo verde indica que a visita já foi realizada naquele mês.",
+      "O alerta no topo lista quem ainda não tem visita planejada no ano.",
+    ],
+  },
+  {
+    id: "eudr",
+    titulo: "EUDR — exportação para a União Europeia",
+    rota: "/painel/eudr",
+    resumo:
+      "Pacote de geolocalização exigido para exportar café à Europa.",
+    passos: [
+      "No menu, em Análise & Dados, clique em EUDR.",
+      "Escolha o cliente: o sistema mostra quantos imóveis já têm polígono cadastrado.",
+      "Baixe o arquivo GeoJSON (para sistemas de due diligence) ou a declaração em PDF.",
+      "Imóveis sem mapa aparecem no aviso — envie o KML deles em Imóveis & Talhões.",
+    ],
+  },
+  {
+    id: "financeiro",
+    titulo: "Financeiro da consultoria",
+    rota: "/painel/financeiro",
+    resumo:
+      "Contratos de mensalidade, faturas do mês e inadimplência por cliente.",
+    passos: [
+      "No menu, em Análise & Dados, clique em Financeiro.",
+      "Cadastre o contrato de cada cliente com valor mensal e dia de vencimento.",
+      "Nas faturas do mês, registre o pagamento recebido ou cobre pelo WhatsApp.",
+      "Os indicadores do topo mostram a receita recorrente, o recebido e o que está em atraso.",
+    ],
+  },
+  {
+    id: "dossie",
+    titulo: "Dossiê do auditor",
+    rota: "/painel/dossie",
+    resumo:
+      "Visão consolidada e somente leitura de um cliente, pronta para a auditoria externa.",
+    passos: [
+      "No menu, em Análise & Dados, clique em Dossiê do auditor.",
+      "Escolha o cliente: aparecem certificações, auditorias, CAPAs, documentos e treinamentos numa página só.",
+      "As CAPAs já fechadas ficam ocultas por padrão — use o botão para mostrá-las.",
+      "Use Imprimir para gerar a versão em papel/PDF para o auditor.",
+    ],
+  },
+  {
+    id: "trilha",
+    titulo: "Trilha de auditoria",
+    rota: "/painel/trilha",
+    resumo:
+      "Registro imutável de quem alterou o quê no sistema.",
+    passos: [
+      "No menu, em Análise & Dados, clique em Trilha de auditoria.",
+      "Filtre por tabela ou por tipo de ação para achar um evento específico.",
+      "Cada linha mostra data, autor e um resumo do registro alterado.",
+    ],
+    dicas: [
+      "Estes registros não podem ser editados nem apagados — é o que dá credibilidade ao dossiê perante a certificadora.",
+    ],
+  },
+  {
+    id: "exportacao",
+    titulo: "Exportação de dados",
+    rota: "/painel/exportacao",
+    resumo:
+      "Backup completo dos dados, da carteira inteira ou de um cliente.",
+    passos: [
+      "No menu, em Análise & Dados, clique em Exportação de dados.",
+      "Escolha exportar a carteira completa ou apenas um cliente.",
+      "O arquivo baixado traz todos os módulos e serve como backup ou para levar os dados a outro sistema.",
+    ],
+    dicas: [
+      "O arquivo contém dados pessoais de trabalhadores — guarde com cuidado.",
+    ],
+  },
+  {
+    id: "queixa",
+    titulo: "Canal de queixas (público)",
+    rota: "/queixa/alto-da-serra",
+    resumo:
+      "Página aberta, sem login, para o trabalhador relatar um problema com segurança.",
+    passos: [
+      "Imprima o cartaz com o link/QR do canal e fixe em local visível na fazenda.",
+      "O trabalhador escreve o relato — o envio é anônimo por padrão, sem pedir nome nem documento.",
+      "Ao final ele recebe um número de protocolo para acompanhar sem se identificar.",
+      "Os relatos chegam na aba Queixas de Compliance social.",
+    ],
+    dicas: [
+      "O botão “Sair e limpar” apaga a página do histórico — importante para quem usa celular emprestado.",
+    ],
+  },
+  {
+    id: "portal-pendencias",
+    titulo: "Portal — pendências do produtor",
+    rota: "/portal/pendencias",
+    resumo:
+      "O que o produtor precisa resolver, com prazo e a possibilidade de enviar a foto da correção.",
+    passos: [
+      "O produtor acessa o portal com o login dele e clica em Pendências.",
+      "Cada pendência mostra o que fazer, até quando e o que acontece se não for feito.",
+      "Ele tira a foto do serviço pronto e envia para verificação.",
+      "A conferência da evidência continua sendo do consultor.",
+    ],
+  },
+  {
+    id: "campo-clientes",
+    titulo: "App de campo — clientes",
+    rota: "/campo/clientes",
+    resumo: "Lista das fazendas disponíveis no aparelho para iniciar uma visita.",
+    passos: [
+      "Na barra inferior do app, toque em Clientes.",
+      "Use a busca para achar a fazenda rapidamente.",
+      "Toque na fazenda para iniciar uma nova visita.",
+    ],
+  },
+  {
+    id: "campo-alertas",
+    titulo: "App de campo — alertas",
+    rota: "/campo/alertas",
+    resumo: "Pendências e vencimentos que o consultor precisa acompanhar.",
+    passos: [
+      "Na barra inferior do app, toque em Alertas.",
+      "⏱ indica alerta de prazo; ⚡ indica alerta gerado por um acontecimento.",
+      "Os alertas continuam aparecendo até a pendência ser resolvida.",
+    ],
+  },
+  {
     id: "docs",
     titulo: "Documentação do produto",
     rota: "/docs",
