@@ -16,7 +16,9 @@ import {
  * no servidor — esconder um botão na tela nunca é a única proteção.
  */
 
-export type ResultadoAcao = { ok: true } | { ok: false; erro: string };
+export type ResultadoAcao =
+  | { ok: true; id?: string }
+  | { ok: false; erro: string };
 
 const ERRO_DEMO =
   "Modo demonstração: conecte o Supabase para gravar alterações de verdade.";
@@ -282,5 +284,5 @@ export async function criarCapa(dados: DadosNovaCapa): Promise<ResultadoAcao> {
   }
 
   revalidatePath("/painel/capas");
-  return { ok: true };
+  return { ok: true, id: capa.id as string };
 }

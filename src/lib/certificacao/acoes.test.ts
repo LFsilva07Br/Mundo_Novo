@@ -290,7 +290,8 @@ describe("criarCapa — NC nunca fica sem plano", () => {
 
     const resultado = await criarCapa(dadosValidos);
 
-    expect(resultado).toEqual({ ok: true });
+    // A ação devolve o id da CAPA criada — a auditoria externa usa para vincular.
+    expect(resultado).toEqual({ ok: true, id: ID_CAPA });
     const insercao = chamadas.find(
       (c) => c.tabela === "capas" && c.metodo === "insert",
     );
