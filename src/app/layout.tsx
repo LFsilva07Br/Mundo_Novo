@@ -27,7 +27,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="pt-BR"
       className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {/*
+          "Pular para o conteúdo" — WCAG 2.2 SC 2.4.1 (Ignorar Blocos).
+          Sem ele eram ~30 toques de Tab para atravessar a barra lateral do
+          painel antes de chegar ao texto da página. É o primeiro elemento
+          focável do documento, fica escondido acima da dobra e desliza para a
+          tela quando recebe foco (estilo em src/app/globals.css). O destino
+          #conteudo está nos <main> dos layouts de painel, campo e portal.
+        */}
+        <a href="#conteudo" className="pular-para-conteudo">
+          Pular para o conteúdo
+        </a>
+        {children}
+      </body>
     </html>
   );
 }

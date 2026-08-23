@@ -58,7 +58,7 @@ export default async function LayoutPainel({
             </Link>
           </div>
         ) : null}
-        <main className="flex-1 p-6 lg:p-8">{children}</main>
+        <main id="conteudo" className="flex-1 p-6 lg:p-8">{children}</main>
       </div>
       <Toaster />
     </div>

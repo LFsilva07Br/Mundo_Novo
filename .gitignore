@@ -41,3 +41,9 @@ yarn-error.log*
 next-env.d.ts
 supabase/.temp/
 .claude/
+
+# playwright (testes de ponta a ponta)
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
