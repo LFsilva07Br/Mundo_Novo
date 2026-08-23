@@ -45,18 +45,23 @@ São duas experiências sobre a mesma base de dados:
 | **Editor de Checklist** | Itens reais da RA 1.4 **versionados**: rascunho → edição → publicação (só a versão publicada vale nas visitas) |
 | **Alertas & Automação** | Régua de disparos validada (90/60/30/15/7 + longos) e gatilhos por evento; robô ALAICE diário às 06:00 com log de execuções e modo verificação assistida |
 | **Usuários & Permissões** | Equipe real do banco: papéis e alçada editáveis e **convite de novos usuários por e-mail** |
-| **Relatórios** | Estimativa de safra por produtor, controle ambiental e conformidade por cliente |
+| **Relatórios** | Estimativa de safra, controle ambiental e conformidade — com **exportação em Excel e PDF**, **relatório mensal do cliente** com a marca da consultoria e **pacote de auditoria externa** (só CAPAs abertas) |
+| **📱 App de Campo (PWA)** | App do consultor instalável no celular, **100% offline**: pacote de dados baixado no aparelho, checklist com fotos (GPS/hora automáticos), assinatura do produtor na tela e fila de sincronização — ao reconectar, as visitas sobem e as NCs viram CAPAs |
+| **Evidências fotográficas** | Upload de fotos nas NCs (com mínimo por item) e evidências nas ações de CAPA, com galeria (data, GPS, descrição) |
+| **Conformidade viva** | Concluir uma auditoria recalcula automaticamente o % do cliente; a ficha mostra o histórico de auditorias |
+| **Overrides de alertas** | Régua de disparos personalizada por cliente (com cópia ao administrador do grupo externo) |
+| **Resumo semanal** | Toda segunda 07:00 o sistema consolida a semana (tarefas, CAPAs, vencimentos, contratos) para o gestor |
+| **Segurança de acesso** | Senha provisória força a troca no primeiro acesso; exportações sem login retornam vazias |
 
 > **Sistema conectado:** o banco de dados está no ar (região São Paulo) com a carteira real carregada; todas as telas acima leem e gravam de verdade, com login obrigatório. O modo demonstração continua existindo apenas para desenvolvimento sem banco.
 
 ### 🔜 Próximas entregas
 
-- **App do consultor (Fase 4)** — PWA 100% offline no celular: checklist em campo, fotos com GPS e horário, assinatura do produtor, fila de sincronização e registro de início/fim com localização.
-- **Fotos e anexos nas NCs** — upload de evidências fotográficas (com mínimo por item) no fluxo de visita e nas ações de CAPA.
-- **Relatórios exportáveis** — PDF/Excel com a marca da consultoria, relatório mensal por cliente e pacote para auditoria externa (com opção de ocultar NCs já tratadas).
-- **Overrides por cliente na régua de alertas** e resumo semanal por e-mail ao gestor.
-- **Robô ALAICE — raspagem completa** — hoje o robô roda diariamente com verificação assistida; a leitura automática de datas no site depende de validação da estrutura do site da certificadora.
+- **Envio de e-mails** — os alertas e o resumo semanal já são gerados; falta plugar um serviço de e-mail para dispará-los também por e-mail (hoje vivem na Agenda).
+- **Fonte da certificadora** — o domínio informado da ALAICE não existe e o diretório oficial da Rainforest Alliance é um painel sem API; o robô opera em verificação assistida com link direto ao painel oficial. **Alinhar com a cliente qual portal a certificadora realmente usa.**
+- **Cadastro dos demais clientes da carteira** (44 de 52) — via tela ou importação de planilhas.
 - **Integrações Microsoft** (Power BI, Outlook/Teams, Planner) — pós-MVP, conforme roadmap.
+- **Biometria no app de campo** e limpeza automática de visitas antigas sincronizadas no aparelho.
 
 ## Referências do produto
 

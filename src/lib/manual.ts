@@ -223,6 +223,38 @@ export const TELAS_MANUAL: TelaManual[] = [
     ],
   },
   {
+    id: "campo",
+    titulo: "App de Campo (celular)",
+    rota: "/campo",
+    resumo:
+      "O app do consultor: instalável no celular e 100% funcional sem internet.",
+    passos: [
+      "No celular, acesse o endereço do sistema e entre — você cairá no app de campo em /campo.",
+      "No navegador do celular, use “Adicionar à tela inicial” para instalar como aplicativo.",
+      "Com internet, o app baixa o pacote de dados (clientes, checklist publicado e tarefas) para o aparelho.",
+      "Toque em “Nova visita”, escolha o cliente e execute o checklist normalmente — mesmo sem sinal.",
+      "Nas não conformidades, tire fotos (GPS e hora entram sozinhos) e descreva a evidência.",
+      "Ao final, colha a assinatura do produtor na tela e finalize.",
+    ],
+    dicas: [
+      "A bolinha no topo mostra se você está online ou offline.",
+      "Tudo fica salvo no aparelho a cada toque — pode fechar o app no meio da visita.",
+    ],
+  },
+  {
+    id: "campo-sync",
+    titulo: "Sincronização do campo",
+    rota: "/campo/sync",
+    resumo:
+      "Fila de envio das visitas feitas offline.",
+    passos: [
+      "Abra a aba Sincronizar na barra inferior do app.",
+      "Quando houver internet, toque em “Sincronizar agora” — cada visita sobe com fotos e assinatura.",
+      "As não conformidades viram CAPAs automaticamente no painel do gestor.",
+      "Use “Atualizar pacote de dados” antes de ir a campo para levar a versão mais recente do checklist.",
+    ],
+  },
+  {
     id: "docs",
     titulo: "Documentação do produto",
     rota: "/docs",
