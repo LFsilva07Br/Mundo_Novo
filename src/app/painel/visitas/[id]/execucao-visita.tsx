@@ -13,7 +13,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { GaleriaEvidencias } from "@/components/evidencias/galeria-evidencias";
 import { concluirVisita, responderItem } from "@/lib/checklists/acoes";
+import { enviarFotoVisita, type FotoVisita } from "@/lib/evidencias/acoes";
+import {
+  TAMANHO_MAXIMO_MB,
+  TIPOS_DE_IMAGEM_PERMITIDOS,
+  validarArquivoEvidencia,
+} from "@/lib/evidencias/regras";
 import {
   calcularConformidade,
   tamanhoDescricao,
@@ -31,11 +38,15 @@ import { formatarData } from "@/lib/vencimentos";
 
 type Props = {
   visita: VisitaDetalhe;
+  /** Fotos já enviadas (URLs assinadas geradas no servidor). */
+  fotos?: FotoVisita[];
+  /** Sem Supabase conectado o upload fica desabilitado, com aviso amigável. */
+  modoDemo?: boolean;
 };
 
 type RespostaLocal = { resposta: Resposta; descricao: string | null };
 
-export function ExecucaoVisita({ visita }: Props) {
+export function ExecucaoVisita({ visita, fotos = [], modoDemo = false }: Props) {
   const [respostas, setRespostas] = useState<Record<string, RespostaLocal>>(
     () =>
       Object.fromEntries(
@@ -60,6 +71,26 @@ export function ExecucaoVisita({ visita }: Props) {
     (r) => r.resposta === "nao_conforme",
   ).length;
 
+  const fotosPorItem = useMemo(() => {
+    const mapa = new Map<string, FotoVisita[]>();
+    for (const foto of fotos) {
+      if (!foto.itemId) continue;
+      const lista = mapa.get(foto.itemId) ?? [];
+      lista.push(foto);
+      mapa.set(foto.itemId, lista);
+    }
+    return mapa;
+  }, [fotos]);
+
+  // Itens NC abaixo do mínimo de fotos: aviso apenas — a conclusão no
+  // navegador não é bloqueada (o bloqueio pelo mínimo é do app de campo).
+  const itensAbaixoDoMinimo = visita.itens.filter(
+    (item) =>
+      respostas[item.id]?.resposta === "nao_conforme" &&
+      item.fotosMinimas > 0 &&
+      (fotosPorItem.get(item.id)?.length ?? 0) < item.fotosMinimas,
+  );
+
   function responder(item: ItemVersao, resposta: Resposta, descricao?: string) {
     setErro(null);
     iniciarTransicao(async () => {
@@ -80,6 +111,28 @@ export function ExecucaoVisita({ visita }: Props) {
           descricao: resposta === "nao_conforme" ? (descricao ?? null) : null,
         },
       }));
+    });
+  }
+
+  function enviarFotos(itemId: string, arquivos: File[]) {
+    setErro(null);
+    for (const arquivo of arquivos) {
+      const validacao = validarArquivoEvidencia(arquivo);
+      if (!validacao.ok) {
+        setErro(validacao.erro);
+        return;
+      }
+    }
+    iniciarTransicao(async () => {
+      for (const arquivo of arquivos) {
+        const dados = new FormData();
+        dados.append("arquivo", arquivo);
+        const resultado = await enviarFotoVisita(visita.id, itemId, dados);
+        if (!resultado.ok) {
+          setErro(resultado.erro);
+          return;
+        }
+      }
     });
   }
 
@@ -190,27 +243,42 @@ export function ExecucaoVisita({ visita }: Props) {
             key={item.id}
             item={item}
             resposta={respostas[item.id] ?? null}
+            fotos={fotosPorItem.get(item.id) ?? []}
             travado={concluida}
             pendente={pendente}
+            modoDemo={modoDemo}
             aoResponder={(resposta, descricao) =>
               responder(item, resposta, descricao)
             }
+            aoEnviarFotos={(arquivos) => enviarFotos(item.id, arquivos)}
           />
         ))}
       </div>
 
       {!concluida ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4">
-          <p className="text-sm text-muted-foreground">
-            A visita só pode ser concluída com todos os itens obrigatórios
-            respondidos.
-            {conformidade !== null
-              ? ` Conformidade parcial: ${conformidade}%.`
-              : ""}
-          </p>
-          <Button disabled={pendente} onClick={concluir}>
-            Concluir visita
-          </Button>
+        <div className="space-y-3 rounded-xl border p-4">
+          {itensAbaixoDoMinimo.length > 0 ? (
+            <p className="flex items-start gap-2 rounded-lg bg-warning/10 p-3 text-xs font-semibold text-warning">
+              <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
+              {itensAbaixoDoMinimo.length === 1
+                ? `O item ${itensAbaixoDoMinimo[0].codigo} está abaixo do mínimo de fotos.`
+                : `${itensAbaixoDoMinimo.length} itens estão abaixo do mínimo de fotos (${itensAbaixoDoMinimo.map((i) => i.codigo).join(", ")}).`}{" "}
+              Isso não impede a conclusão aqui no navegador — o mínimo é
+              exigido pelo app de campo.
+            </p>
+          ) : null}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+              A visita só pode ser concluída com todos os itens obrigatórios
+              respondidos.
+              {conformidade !== null
+                ? ` Conformidade parcial: ${conformidade}%.`
+                : ""}
+            </p>
+            <Button disabled={pendente} onClick={concluir}>
+              Concluir visita
+            </Button>
+          </div>
         </div>
       ) : null}
     </div>
@@ -220,15 +288,21 @@ export function ExecucaoVisita({ visita }: Props) {
 function ItemDaVisita({
   item,
   resposta,
+  fotos,
   travado,
   pendente,
+  modoDemo,
   aoResponder,
+  aoEnviarFotos,
 }: {
   item: ItemVersao;
   resposta: RespostaLocal | null;
+  fotos: FotoVisita[];
   travado: boolean;
   pendente: boolean;
+  modoDemo: boolean;
   aoResponder: (resposta: Resposta, descricao?: string) => void;
+  aoEnviarFotos: (arquivos: File[]) => void;
 }) {
   const [editandoNc, setEditandoNc] = useState(false);
   const [descricao, setDescricao] = useState(resposta?.descricao ?? "");
@@ -344,6 +418,91 @@ function ItemDaVisita({
           {resposta.descricao}
         </p>
       ) : null}
+
+      {atual === "nao_conforme" || editandoNc ? (
+        <FotosDoItem
+          item={item}
+          fotos={fotos}
+          travado={travado}
+          pendente={pendente}
+          modoDemo={modoDemo}
+          aoEnviar={aoEnviarFotos}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function FotosDoItem({
+  item,
+  fotos,
+  travado,
+  pendente,
+  modoDemo,
+  aoEnviar,
+}: {
+  item: ItemVersao;
+  fotos: FotoVisita[];
+  travado: boolean;
+  pendente: boolean;
+  modoDemo: boolean;
+  aoEnviar: (arquivos: File[]) => void;
+}) {
+  const abaixoDoMinimo = item.fotosMinimas > 0 && fotos.length < item.fotosMinimas;
+
+  return (
+    <div className="mt-3 space-y-2 rounded-xl border border-dashed p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <label htmlFor={`fotos-${item.id}`} className="text-sm font-bold">
+          Fotos da evidência
+        </label>
+        <span
+          className={cn(
+            "text-xs font-semibold tabular-nums",
+            abaixoDoMinimo ? "text-warning" : "text-primary",
+          )}
+        >
+          {fotos.length}/{item.fotosMinimas} foto
+          {item.fotosMinimas === 1 ? "" : "s"}
+        </span>
+      </div>
+
+      <GaleriaEvidencias
+        itens={fotos.map((foto) => ({
+          id: foto.id,
+          url: foto.url,
+          gps: foto.gps,
+          data: foto.tiradaEm,
+        }))}
+        vazio="Nenhuma foto anexada a este item ainda."
+      />
+
+      {modoDemo ? (
+        <p className="text-xs font-semibold text-muted-foreground">
+          Modo demonstração — conecte o Supabase para anexar fotos.
+        </p>
+      ) : (
+        <input
+          id={`fotos-${item.id}`}
+          type="file"
+          multiple
+          accept={TIPOS_DE_IMAGEM_PERMITIDOS.join(",")}
+          disabled={travado || pendente}
+          onChange={(e) => {
+            const arquivos = Array.from(e.target.files ?? []);
+            e.target.value = "";
+            if (arquivos.length > 0) aoEnviar(arquivos);
+          }}
+          className="block w-full text-xs text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-secondary-foreground hover:file:bg-secondary/80"
+        />
+      )}
+
+      <p className="text-xs text-muted-foreground">
+        JPEG, PNG ou WebP, até {TAMANHO_MAXIMO_MB} MB por foto.
+        {abaixoDoMinimo
+          ? " Abaixo do mínimo do item — aqui no navegador a visita ainda pode ser concluída; o bloqueio pelo mínimo é do app de campo."
+          : ""}
+      </p>
     </div>
   );
 }

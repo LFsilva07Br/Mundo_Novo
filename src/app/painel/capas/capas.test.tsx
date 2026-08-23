@@ -62,6 +62,20 @@ describe("Planos de ação — CAPA", () => {
     expect(screen.getAllByText("✓ Fechada").length).toBeGreaterThanOrEqual(2);
   });
 
+  it("área expandida traz a seção de Evidências (demonstração: aviso amigável)", async () => {
+    const usuario = userEvent.setup();
+    render(<VisaoCapas capas={capas} clientes={CLIENTES} modoDemo={true} />);
+
+    await usuario.click(
+      screen.getByRole("button", { name: /Expandir CAPA #131/ }),
+    );
+
+    expect(screen.getByText("Evidências")).toBeInTheDocument();
+    expect(
+      screen.getByText(/conecte o Supabase para anexar e ver evidências/),
+    ).toBeInTheDocument();
+  });
+
   it("abre o diálogo de Nova CAPA com responsável e prazo obrigatórios", async () => {
     const usuario = userEvent.setup();
     render(<VisaoCapas capas={capas} clientes={CLIENTES} modoDemo={true} />);
