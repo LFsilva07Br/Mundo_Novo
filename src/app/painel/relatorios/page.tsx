@@ -39,6 +39,8 @@ const AREA_OUTROS = AREA_TOTAL - AREA_CAFE - AREA_APP - AREA_RESERVA;
 
 export default async function PaginaRelatorios() {
   const clientes = await listarClientes();
+  const clienteSafra =
+    clientes.find((c) => c.nome.includes("Alto da Serra")) ?? clientes[0];
   const previsaoTotal = TALHOES_ALTO_DA_SERRA.reduce(
     (s, t) => s + t.previsao2526Sacas,
     0,
@@ -67,7 +69,7 @@ export default async function PaginaRelatorios() {
           </CardDescription>
           <BotoesExportar
             base="/api/relatorios/safra"
-            parametros={{ cliente: "alto-da-serra" }}
+            parametros={{ cliente: clienteSafra?.id ?? "alto-da-serra" }}
           />
         </CardHeader>
         <CardContent>
