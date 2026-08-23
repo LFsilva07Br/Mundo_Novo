@@ -6,6 +6,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
+<!-- END:nextjs-agent-rules -->
+
 # Convenções do projeto Mundo Novo
 
 - **Idioma**: interface, domínio, commits e documentação em **português brasileiro**. Nomes de código do domínio em português (`vencimentos.ts`, `perfis`, `alcada_aprovacao`); termos técnicos de infraestrutura podem ficar em inglês.
@@ -24,5 +26,3 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 4. CAR, matrícula, licenças e outorgas pertencem ao imóvel rural, não à fazenda.
 5. Checklist versionado: alterações só chegam ao app após publicação.
 6. Fazenda passa por etapa de implantação antes de habilitar avaliações.
-
-<!-- END:nextjs-agent-rules -->

@@ -73,6 +73,27 @@ export type Cliente = {
   imoveis?: ImovelRural[];
 };
 
+export type TipoRegistroContato =
+  | "ligacao"
+  | "email"
+  | "whatsapp"
+  | "reuniao"
+  | "visita";
+
+/** Registro de contato feito com o cliente (ligação, visita, reunião…). */
+export type RegistroContato = {
+  id: string;
+  clienteId: string;
+  tipo: TipoRegistroContato;
+  assunto: string;
+  detalhes?: string;
+  duracaoMinutos?: number;
+  /** Nome de quem registrou o contato. */
+  autor?: string;
+  /** ISO com data e hora. */
+  ocorridoEm: string;
+};
+
 export const ROTULO_NORMA: Record<Norma, string> = {
   ra: "Rainforest Alliance",
   quatro_c: "4C",
@@ -89,4 +110,18 @@ export const ROTULO_AREA_CONTATO: Record<
   rh_social: "RH / Social",
   administrativo: "Administrativo",
   outro: "Outro",
+};
+
+export const ROTULO_TIPO_REGISTRO: Record<TipoRegistroContato, string> = {
+  ligacao: "Ligação",
+  email: "E-mail",
+  whatsapp: "WhatsApp",
+  reuniao: "Reunião",
+  visita: "Visita",
+};
+
+export const ROTULO_FASE: Record<FaseCliente, string> = {
+  implantacao: "Implantação",
+  ativo: "Ativo",
+  inativo: "Inativo",
 };

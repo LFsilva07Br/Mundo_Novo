@@ -20,11 +20,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { listarGrupos, obterCliente } from "@/lib/carteira/consultas";
+import { listarRegistrosContato } from "@/lib/carteira/registros";
 import {
-  ROTULO_AREA_CONTATO,
+  ROTULO_FASE,
   ROTULO_NORMA,
+  ROTULO_TIPO_REGISTRO,
 } from "@/lib/carteira/tipos";
-import { formatarArea } from "@/lib/vencimentos";
+import { formatarArea, formatarData } from "@/lib/vencimentos";
+import { FormularioCliente } from "../formulario-cliente";
+import { ContatosCliente } from "./contatos-cliente";
+import { FormularioRegistroContato } from "./formulario-registro-contato";
 
 export async function generateMetadata({
   params,
@@ -41,7 +46,10 @@ export default async function PaginaCliente({
   const cliente = await obterCliente(id);
   if (!cliente) notFound();
 
-  const grupos = await listarGrupos();
+  const [grupos, registros] = await Promise.all([
+    listarGrupos(),
+    listarRegistrosContato(cliente.id),
+  ]);
   const grupo = grupos.find((g) => g.id === cliente.grupoId);
   const areaTotal =
     cliente.imoveis?.reduce((s, i) => s + i.areaTotalHa, 0) ?? null;
@@ -67,12 +75,18 @@ export default async function PaginaCliente({
                 ? "Cadeia de Suprimentos"
                 : "Fazenda"}
             </Badge>
+            {cliente.fase !== "ativo" ? (
+              <Badge variant="secondary">{ROTULO_FASE[cliente.fase]}</Badge>
+            ) : null}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {cliente.cidade} - {cliente.uf} · {cliente.regiao} ·{" "}
             {grupo ? grupo.nome : "Cliente direto (sem grupo)"}
             {cliente.produtor ? ` · Produtor: ${cliente.produtor}` : null}
           </p>
+          <div className="mt-3">
+            <FormularioCliente grupos={grupos} cliente={cliente} />
+          </div>
         </div>
         {typeof cliente.conformidade === "number" ? (
           <div className="rounded-2xl bg-secondary px-4 py-2 text-center">
@@ -158,37 +172,72 @@ export default async function PaginaCliente({
         </CardContent>
       </Card>
 
-      {cliente.contatos?.length ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Contatos por área</CardTitle>
+      <ContatosCliente
+        clienteId={cliente.id}
+        contatos={cliente.contatos ?? []}
+      />
+
+      <Card>
+        <CardHeader className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-1.5">
+            <CardTitle>Registro de contatos</CardTitle>
             <CardDescription>
-              Os avisos automáticos do sistema usam o contato da área
-              responsável.
+              Histórico de ligações, mensagens, reuniões e visitas feitas com o
+              cliente.
             </CardDescription>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <FormularioRegistroContato clienteId={cliente.id} />
+        </CardHeader>
+        <CardContent>
+          {registros.length ? (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Contato</TableHead>
-                  <TableHead>Área</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Assunto</TableHead>
+                  <TableHead>Autor</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cliente.contatos.map((contato) => (
-                  <TableRow key={`${contato.nome}-${contato.area}`}>
-                    <TableCell className="font-semibold">
-                      {contato.nome}
+                {registros.map((registro) => (
+                  <TableRow key={registro.id}>
+                    <TableCell className="whitespace-nowrap text-sm">
+                      {formatarData(new Date(registro.ocorridoEm))}
                     </TableCell>
-                    <TableCell>{ROTULO_AREA_CONTATO[contato.area]}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">
+                        {ROTULO_TIPO_REGISTRO[registro.tipo]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <p className="font-semibold">
+                        {registro.assunto}
+                        {registro.duracaoMinutos
+                          ? ` · ${registro.duracaoMinutos} min`
+                          : null}
+                      </p>
+                      {registro.detalhes ? (
+                        <p className="max-w-96 text-xs text-muted-foreground">
+                          {registro.detalhes}
+                        </p>
+                      ) : null}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {registro.autor ?? "—"}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
-      ) : null}
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Nenhum contato registrado ainda — use “Novo registro” para
+              começar o histórico.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {cliente.imoveis?.length ? (
         <Card>

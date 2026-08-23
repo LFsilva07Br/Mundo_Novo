@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BarraLateral } from "@/components/barra-lateral";
+import { Toaster } from "@/components/ui/sonner";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { getUsuarioAtual } from "@/lib/supabase/server";
 
@@ -23,6 +24,7 @@ export default async function LayoutPainel({
         ) : null}
         <main className="flex-1 p-6 lg:p-8">{children}</main>
       </div>
+      <Toaster />
     </div>
   );
 }
