@@ -39,7 +39,7 @@ export default function LayoutCampo({ children }: LayoutProps<"/campo">) {
           </div>
           <IndicadorConexao />
         </header>
-        <main className="flex-1 px-4 pb-24 pt-4">{children}</main>
+        <main id="conteudo" className="flex-1 px-4 pb-24 pt-4">{children}</main>
       </div>
       <BarraAbas />
       <Toaster position="top-center" />

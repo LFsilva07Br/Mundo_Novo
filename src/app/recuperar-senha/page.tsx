@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 
 export default function PaginaRecuperarSenha() {
   return (
-    <main className="flex flex-1 items-center justify-center bg-sidebar p-6">
+    <main id="conteudo" className="flex flex-1 items-center justify-center bg-sidebar p-6">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl border border-white/20 bg-white/10 text-3xl">

@@ -64,7 +64,7 @@ export default async function LayoutPortal({ children }: LayoutProps<"/portal">)
         </div>
       ) : null}
 
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
+      <main id="conteudo" className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
         {children}
       </main>
       <Toaster />
