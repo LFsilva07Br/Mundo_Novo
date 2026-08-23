@@ -60,6 +60,22 @@ export const MORADIAS_DEMO: Moradia[] = [
   },
 ];
 
+export type FichaEpiDemo = {
+  trabalhador: string;
+  epi: string;
+  ca?: string;
+  quantidade: number;
+  entregueEm: string; // ISO
+  assinada: boolean;
+};
+
+/** Entregas de EPI de demonstração (mesma estrutura da tabela fichas_epi). */
+export const FICHAS_EPI_DEMO: FichaEpiDemo[] = [
+  { trabalhador: "Ricardo Aparecido de Abreu", epi: "Luva nitrílica", ca: "32128", quantidade: 2, entregueEm: "2026-06-08", assinada: true },
+  { trabalhador: "Ricardo Aparecido de Abreu", epi: "Respirador PFF2", ca: "38503", quantidade: 5, entregueEm: "2026-06-08", assinada: true },
+  { trabalhador: "Antonio Sales Ferreira", epi: "Botas de borracha", ca: "42554", quantidade: 1, entregueEm: "2026-05-12", assinada: false },
+];
+
 export type Treinamento = {
   nome: string;
   periodicidadeMeses: number;

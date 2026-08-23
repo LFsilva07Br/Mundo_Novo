@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { base64DaAssinatura, caminhoAssinatura } from "./regras";
 import {
   calcularVenceEm,
   esquemaAtualizarTrabalhador,
@@ -230,6 +231,24 @@ export async function adicionarMorador(
   return { ok: true, mensagem: `Morador ${resultado.data.nome} adicionado.` };
 }
 
+/**
+ * Assinaturas colhidas no dialog: campos `assinatura-<trabalhadorId>` com o
+ * PNG do quadro em data URL. Só valem para colaboradores marcados na turma.
+ */
+function assinaturasDaTurma(
+  formData: FormData,
+  trabalhadorIds: string[],
+): Map<string, string> {
+  const assinaturas = new Map<string, string>();
+  for (const trabalhadorId of trabalhadorIds) {
+    const valor = formData.get(`assinatura-${trabalhadorId}`);
+    if (typeof valor === "string" && valor.trim() !== "") {
+      assinaturas.set(trabalhadorId, valor);
+    }
+  }
+  return assinaturas;
+}
+
 export async function registrarParticipacaoTreinamento(
   _estadoAnterior: EstadoAcao,
   formData: FormData,
@@ -267,6 +286,19 @@ export async function registrarParticipacaoTreinamento(
     treinamento.periodicidade_meses,
   );
 
+  const assinaturas = assinaturasDaTurma(
+    formData,
+    resultado.data.trabalhadorIds,
+  );
+  for (const dataUrl of assinaturas.values()) {
+    if (!base64DaAssinatura(dataUrl)) {
+      return {
+        ok: false,
+        erro: "Uma das assinaturas não pôde ser lida — limpe o quadro e assine de novo.",
+      };
+    }
+  }
+
   const { error } = await supabase.from("treinamento_participacoes").upsert(
     resultado.data.trabalhadorIds.map((trabalhadorId) => ({
       treinamento_id: treinamento.id,
@@ -281,12 +313,45 @@ export async function registrarParticipacaoTreinamento(
     return { ok: false, erro: `Não foi possível registrar: ${error.message}` };
   }
 
+  // Assinaturas dos participantes → bucket (treinamentos/) + caminho na linha.
+  let assinaturasArquivadas = 0;
+  for (const [trabalhadorId, dataUrl] of assinaturas) {
+    const base64 = base64DaAssinatura(dataUrl);
+    if (!base64) continue;
+    const caminho = caminhoAssinatura("treinamentos", treinamento.id);
+    const { error: erroUpload } = await supabase.storage
+      .from("evidencias")
+      .upload(caminho, Buffer.from(base64, "base64"), {
+        contentType: "image/png",
+      });
+    if (erroUpload) continue;
+    const { error: erroAssinatura } = await supabase
+      .from("treinamento_participacoes")
+      .update({ assinatura_caminho: caminho })
+      .match({
+        treinamento_id: treinamento.id,
+        trabalhador_id: trabalhadorId,
+        realizado_em: resultado.data.realizadoEm,
+      });
+    if (erroAssinatura) {
+      await supabase.storage.from("evidencias").remove([caminho]);
+      continue;
+    }
+    assinaturasArquivadas += 1;
+  }
+
   revalidatePath("/painel/social");
   return {
     ok: true,
     mensagem: `Turma de ${treinamento.nome} registrada — válida até ${venceEm
       .split("-")
       .reverse()
-      .join("/")}.`,
+      .join("/")}.${
+      assinaturasArquivadas > 0
+        ? ` ${assinaturasArquivadas} assinatura${
+            assinaturasArquivadas === 1 ? "" : "s"
+          } arquivada${assinaturasArquivadas === 1 ? "" : "s"}.`
+        : ""
+    }`,
   };
 }

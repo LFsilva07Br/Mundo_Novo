@@ -61,6 +61,10 @@ export type TreinamentoResumo = {
    * se já passou, o treinamento está vencido para alguém da equipe.
    */
   proximoVencimento?: string;
+  /** Participações na turma mais recente (base da ata). */
+  participantesUltimaTurma?: number;
+  /** Assinaturas já colhidas na turma mais recente. */
+  assinaturasUltimaTurma?: number;
 };
 
 /** Id do cliente Alto da Serra na carga inicial (padrão do módulo social). */
@@ -228,6 +232,8 @@ function treinamentosDemo(): TreinamentoResumo[] {
       totalTrabalhadores: t.totalTrabalhadores,
       ultimaRealizacao: t.ultimaRealizacao,
       proximoVencimento: vencimento ? paraIso(vencimento) : undefined,
+      participantesUltimaTurma: t.ultimaRealizacao ? t.participantes : 0,
+      assinaturasUltimaTurma: 0,
     };
   });
 }
@@ -242,7 +248,7 @@ export async function listarTreinamentos(
     supabase
       .from("treinamentos")
       .select(
-        "id, nome, norma, periodicidade_meses, treinamento_participacoes ( trabalhador_id, realizado_em, vence_em )",
+        "id, nome, norma, periodicidade_meses, treinamento_participacoes ( trabalhador_id, realizado_em, vence_em, assinatura_caminho )",
       )
       .order("nome"),
     supabase
@@ -271,6 +277,7 @@ export async function listarTreinamentos(
       trabalhador_id: string;
       realizado_em: string;
       vence_em: string | null;
+      assinatura_caminho: string | null;
     }[];
   };
 
@@ -296,6 +303,10 @@ export async function listarTreinamentos(
       .filter((v): v is string => v !== null)
       .sort();
     const realizacoes = participacoes.map((p) => p.realizado_em).sort();
+    const ultimaTurma = realizacoes.at(-1);
+    const participacoesUltimaTurma = ultimaTurma
+      ? participacoes.filter((p) => p.realizado_em === ultimaTurma)
+      : [];
 
     return {
       id: t.id,
@@ -304,8 +315,12 @@ export async function listarTreinamentos(
       periodicidadeMeses: t.periodicidade_meses,
       participantes: maisRecentePorTrabalhador.size,
       totalTrabalhadores: equipe.size,
-      ultimaRealizacao: realizacoes.at(-1),
+      ultimaRealizacao: ultimaTurma,
       proximoVencimento: vencimentos[0],
+      participantesUltimaTurma: participacoesUltimaTurma.length,
+      assinaturasUltimaTurma: participacoesUltimaTurma.filter(
+        (p) => p.assinatura_caminho !== null,
+      ).length,
     };
   });
 }

@@ -5,11 +5,13 @@ import { Eraser } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /**
- * Canvas de assinatura do produtor — desenho a dedo (touch) ou mouse.
+ * Quadro de assinatura — desenho a dedo (touch) ou mouse.
+ * Usado no app de campo (assinatura do produtor) e no módulo social
+ * (fichas de EPI e listas de presença de treinamento).
  * A cada traço terminado, devolve o PNG (data URL) pelo onChange;
  * null enquanto estiver em branco.
  */
-export function AssinaturaCanvas({
+export function QuadroAssinatura({
   onChange,
 }: {
   onChange: (dataUrl: string | null) => void;
