@@ -52,6 +52,19 @@ São duas experiências sobre a mesma base de dados:
 | **Overrides de alertas** | Régua de disparos personalizada por cliente (com cópia ao administrador do grupo externo) |
 | **Resumo semanal** | Toda segunda 07:00 o sistema consolida a semana (tarefas, CAPAs, vencimentos, contratos) para o gestor |
 | **Segurança de acesso** | Senha provisória força a troca no primeiro acesso; exportações sem login retornam vazias |
+| **🧪 Agroquímicos** | Aplicações de defensivos por talhão com **dupla trava da norma**: produto da lista proibida da Rainforest gera alerta crítico, e aplicador sem treinamento NR-31 válido **na data da aplicação** é sinalizado; catálogo de produtos e registro de destinação de embalagens com comprovante |
+| **⚖️ Balanço de volume certificado** | Cruza a previsão de safra com os lotes comercializados e alerta se houver risco de vender mais café certificado do que a fazenda produz (exigência RA cap. 2) |
+| **🎯 Prontidão para auditoria** | Semáforo no Dashboard: nota 0–100 por fazenda com as pendências que impedem a auditoria (certificado vencido, CAPA maior aberta, documento ou treinamento vencido, sem auditoria interna no ano) |
+| **📈 Evolução e benchmarking** | Histórico da conformidade por fazenda ao longo do tempo e comparação entre as fazendas da carteira |
+| **🔍 Auditoria externa** | Registro dos achados da certificadora com prazo sugerido de 10 semanas, vínculo com a CAPA interna e indicador de quanto a auditoria interna já havia capturado antes |
+| **💚 Sustentabilidade (DS/DI)** | Registro dos pagamentos de Diferencial de Sustentabilidade e Investimentos ao produtor, com comprovante e exportação em CSV (exigência da norma) |
+| **🦺 Fichas de EPI** | Entrega de EPIs por trabalhador com CA, quantidade e **assinatura colhida na tela** |
+| **📝 Atas de treinamento** | Assinatura dos participantes e geração da ata em PDF com a marca da consultoria |
+| **🛒 Comercialização** | Lotes com rastreabilidade por talhão (peneira, bebida), negociações com trava de saldo — não se negocia mais sacas do que o lote possui |
+| **🗺️ Mapas das fazendas** | Importação de KML (do CAR ou Google Earth) ou GeoJSON por imóvel e visualização dos talhões sobre o mapa |
+| **🏡 Portal do Produtor** | Acesso próprio do produtor: certificado e vencimento, pendências (podendo **enviar foto de evidência** para verificação), dados da fazenda e relatórios — convite enviado pela ficha do cliente |
+| **📧 Envio de e-mails** | Alertas do motor e resumo semanal enviados por e-mail (SMTP gratuito, ex.: Gmail), com registro de cada envio e a situação de entrega |
+| **🔐 Biometria no app de campo** | Desbloqueio do app por digital/rosto no celular, com limpeza automática das visitas já sincronizadas |
 
 > **Sistema conectado:** o banco de dados está no ar (região São Paulo) com a carteira real carregada; todas as telas acima leem e gravam de verdade, com login obrigatório. O modo demonstração continua existindo apenas para desenvolvimento sem banco.
 

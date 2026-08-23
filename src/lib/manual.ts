@@ -255,6 +255,105 @@ export const TELAS_MANUAL: TelaManual[] = [
     ],
   },
   {
+    id: "agro",
+    titulo: "Agroquímicos",
+    rota: "/painel/agro",
+    resumo:
+      "Registro das aplicações de defensivos por talhão, com as travas exigidas pela norma.",
+    passos: [
+      "No menu lateral, clique em Agroquímicos.",
+      "Escolha o cliente no seletor do topo.",
+      "Clique em “Nova aplicação”: escolha o talhão, o produto, a dose, a data e quem aplicou.",
+      "Se o produto estiver na lista proibida pela Rainforest, o sistema avisa em vermelho na hora.",
+      "Se o aplicador estiver com o treinamento NR-31 vencido na data, a linha aparece sinalizada em laranja.",
+      "Use “Registrar destinação” para guardar o comprovante de devolução das embalagens.",
+    ],
+    dicas: [
+      "O indicador “produtos proibidos usados” deve ficar sempre em zero.",
+    ],
+  },
+  {
+    id: "auditoria-externa",
+    titulo: "Auditoria externa",
+    rota: "/painel/auditoria-externa",
+    resumo:
+      "Achados apontados pela certificadora e o acompanhamento até o fechamento.",
+    passos: [
+      "No menu lateral, clique em Auditoria Externa.",
+      "Clique em “Registrar achado” e informe o item da norma, a descrição e a severidade — o prazo já vem sugerido (10 semanas).",
+      "Marque “criar CAPA interna vinculada” para o achado nascer com plano de ação.",
+      "O achado só pode ser fechado depois que a CAPA vinculada estiver fechada.",
+    ],
+    dicas: [
+      "O indicador “% pego internamente antes” mostra a eficácia da sua auditoria interna.",
+    ],
+  },
+  {
+    id: "sustentabilidade",
+    titulo: "Sustentabilidade (DS/DI)",
+    rota: "/painel/sustentabilidade",
+    resumo:
+      "Registro dos pagamentos de Diferencial de Sustentabilidade e Investimentos ao produtor.",
+    passos: [
+      "No menu lateral, clique em Sustentabilidade (DS/DI).",
+      "Clique em “Registrar pagamento”, escolha o tipo (Diferencial ou Investimento), o valor e a data.",
+      "Anexe o comprovante quando houver.",
+      "Use “Baixar CSV” para levar os dados à auditoria ou à contabilidade.",
+    ],
+  },
+  {
+    id: "comercializacao",
+    titulo: "Comercialização",
+    rota: "/painel/comercializacao",
+    resumo:
+      "Lotes de café com rastreabilidade e negociações com controle de saldo.",
+    passos: [
+      "No menu lateral, clique em Comercialização.",
+      "Em “Novo lote”, informe a identificação, as sacas e os talhões de origem (rastreabilidade exigida pela norma).",
+      "Em “Nova negociação”, escolha o lote — o sistema mostra o saldo disponível e impede negociar mais do que existe.",
+      "Ao fechar uma negociação que zera o lote, ele passa automaticamente para “negociado”.",
+    ],
+  },
+  {
+    id: "campo-biometria",
+    titulo: "Biometria no app de campo",
+    rota: "/campo/ajustes",
+    resumo: "Desbloqueio do app do consultor por digital ou reconhecimento facial.",
+    passos: [
+      "No app de campo, toque na engrenagem na tela de Início.",
+      "Ative “Desbloqueio por biometria” e confirme com a digital ou o rosto.",
+      "A partir daí, ao abrir o app aparece a tela de bloqueio verde — desbloqueie com a biometria.",
+      "Use “Limpar visitas já sincronizadas” para liberar espaço no aparelho.",
+    ],
+    dicas: [
+      "Se o aparelho não tiver biometria, o sistema avisa e o acesso continua por senha.",
+    ],
+  },
+  {
+    id: "emails",
+    titulo: "E-mails do sistema",
+    rota: "/painel/emails",
+    resumo: "Histórico dos avisos enviados e como ativar o envio gratuito.",
+    passos: [
+      "No menu lateral (Configuração), clique em E-mails.",
+      "A tabela mostra cada envio com destinatário, origem e situação.",
+      "O cartão de configuração explica o passo a passo para usar um Gmail gratuito (senha de app).",
+    ],
+  },
+  {
+    id: "portal",
+    titulo: "Portal do Produtor",
+    rota: "/portal",
+    resumo:
+      "O que o produtor vê quando entra no sistema: certificado, pendências, fazenda e relatórios.",
+    passos: [
+      "Convide o produtor pela ficha do cliente, em “Convidar produtor para o portal”.",
+      "Ele recebe um e-mail, define a própria senha e entra direto no portal — não vê os dados dos outros clientes.",
+      "Em Pendências ele acompanha as ações corretivas e pode enviar a foto da correção.",
+      "A verificação da evidência continua sendo do consultor.",
+    ],
+  },
+  {
     id: "docs",
     titulo: "Documentação do produto",
     rota: "/docs",
