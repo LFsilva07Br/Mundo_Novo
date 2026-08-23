@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/gatilhos",
+      "schedule": "0 9 * * *"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+name: Robô ALAICE
+
+on:
+  schedule:
+    # 06:00 no horário de Brasília (09:00 UTC)
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+
+jobs:
+  verificar:
+    name: Verificar vencimentos na certificadora
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Executar robô
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python robo/verificar_alaice.py
