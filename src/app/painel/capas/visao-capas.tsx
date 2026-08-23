@@ -47,6 +47,7 @@ import { calcularRankingGaps, podeFecharCapa } from "@/lib/certificacao/regras";
 import { ITENS_CHECKLIST_RA } from "@/lib/certificacao/dados-demo";
 import { formatarData } from "@/lib/vencimentos";
 import { cn } from "@/lib/utils";
+import { SecaoEvidencias } from "./secao-evidencias";
 
 const ROTULO_SEVERIDADE: Record<Capa["severidade"], string> = {
   menor: "Menor",
@@ -299,6 +300,7 @@ export function VisaoCapas({ capas, clientes, modoDemo }: Props) {
                     expandida={expandida}
                     pendentes={pendentes}
                     ocupado={pendente}
+                    modoDemo={modoDemo}
                     aoAlternar={() => alternarExpansao(capa.id)}
                     aoMarcarAcao={(acaoId, concluida) =>
                       marcarAcao(capa.id, acaoId, concluida)
@@ -355,6 +357,7 @@ type PropsLinhas = {
   expandida: boolean;
   pendentes: number;
   ocupado: boolean;
+  modoDemo: boolean;
   aoAlternar: () => void;
   aoMarcarAcao: (acaoId: string, concluida: boolean) => void;
   aoFechar: () => void;
@@ -365,6 +368,7 @@ function CapaLinhas({
   expandida,
   pendentes,
   ocupado,
+  modoDemo,
   aoAlternar,
   aoMarcarAcao,
   aoFechar,
@@ -463,6 +467,12 @@ function CapaLinhas({
                   ))}
                 </ul>
               )}
+              <SecaoEvidencias
+                capaId={capa.id}
+                acoes={capa.acoes}
+                fechada={capa.status === "fechada"}
+                modoDemo={modoDemo}
+              />
               {capa.status !== "fechada" ? (
                 <Button
                   size="sm"

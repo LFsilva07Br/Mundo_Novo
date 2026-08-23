@@ -1,11 +1,23 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { VISITAS_DEMO } from "@/lib/checklists/dados-demo";
+import type { FotoVisita } from "@/lib/evidencias/acoes";
 import { ExecucaoVisita } from "./execucao-visita";
 
 vi.mock("@/lib/checklists/acoes", () => ({
   responderItem: vi.fn(async () => ({ ok: true })),
   concluirVisita: vi.fn(async () => ({ ok: true })),
+}));
+
+vi.mock("@/lib/evidencias/acoes", () => ({
+  enviarFotoVisita: vi.fn(async () => ({ ok: true })),
 }));
 
 const EM_ANDAMENTO = VISITAS_DEMO.find((v) => v.status === "em_andamento")!;
@@ -72,6 +84,122 @@ describe("ExecucaoVisita — visita em andamento", () => {
       /não pode ser concluída/,
     );
     expect(acoes.concluirVisita).not.toHaveBeenCalled();
+  });
+});
+
+describe("ExecucaoVisita — fotos de evidência na NC", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const ITEM_NC = CONCLUIDA.itens.find((i) => i.codigo === "EST-1")!;
+
+  const FOTO: FotoVisita = {
+    id: "foto-1",
+    itemId: ITEM_NC.id,
+    caminho: "visitas/demo/1-a.jpg",
+    gps: "-21.1234,-45.0021",
+    tiradaEm: "2026-08-22T11:00:00Z",
+    url: "https://assinada.exemplo/visitas/demo/1-a.jpg",
+  };
+
+  it("abrir a NC mostra o contador de fotos do item e o campo de anexo", () => {
+    render(<ExecucaoVisita visita={EM_ANDAMENTO} />);
+
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Não conforme" })[0],
+    );
+
+    const minimo = EM_ANDAMENTO.itens[0].fotosMinimas;
+    expect(screen.getByText(`0/${minimo} fotos`)).toBeInTheDocument();
+    expect(screen.getByLabelText("Fotos da evidência")).toBeInTheDocument();
+    expect(
+      screen.getByText(/o bloqueio pelo mínimo é do app de campo/),
+    ).toBeInTheDocument();
+  });
+
+  it("no modo demonstração o anexo fica desabilitado com aviso amigável", () => {
+    render(<ExecucaoVisita visita={EM_ANDAMENTO} modoDemo />);
+
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Não conforme" })[0],
+    );
+
+    expect(
+      screen.getByText(/conecte o Supabase para anexar fotos/),
+    ).toBeInTheDocument();
+  });
+
+  it("mostra as miniaturas já enviadas do item não conforme", () => {
+    render(<ExecucaoVisita visita={CONCLUIDA} fotos={[FOTO]} />);
+
+    expect(screen.getByText(`1/${ITEM_NC.fotosMinimas} fotos`)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Ver evidência 1/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("selecionar arquivos chama o envio para a visita e o item", async () => {
+    const acoes = await import("@/lib/evidencias/acoes");
+    const usuario = userEvent.setup();
+    render(<ExecucaoVisita visita={EM_ANDAMENTO} />);
+
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Não conforme" })[0],
+    );
+
+    const arquivo = new File(["foto"], "deposito.jpg", { type: "image/jpeg" });
+    await usuario.upload(screen.getByLabelText("Fotos da evidência"), arquivo);
+
+    await waitFor(() =>
+      expect(acoes.enviarFotoVisita).toHaveBeenCalledWith(
+        EM_ANDAMENTO.id,
+        EM_ANDAMENTO.itens[0].id,
+        expect.any(FormData),
+      ),
+    );
+  });
+
+  it("recusa arquivo que não é foto sem chamar o servidor", async () => {
+    const acoes = await import("@/lib/evidencias/acoes");
+    const usuario = userEvent.setup({ applyAccept: false });
+    render(<ExecucaoVisita visita={EM_ANDAMENTO} />);
+
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Não conforme" })[0],
+    );
+
+    const arquivo = new File(["laudo"], "laudo.pdf", { type: "application/pdf" });
+    await usuario.upload(screen.getByLabelText("Fotos da evidência"), arquivo);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /JPEG, PNG ou WebP/,
+    );
+    expect(acoes.enviarFotoVisita).not.toHaveBeenCalled();
+  });
+
+  it("avisa perto da conclusão quando uma NC está abaixo do mínimo, sem bloquear", () => {
+    const item = EM_ANDAMENTO.itens[0];
+    const visitaComNc = {
+      ...EM_ANDAMENTO,
+      respostas: [
+        {
+          itemId: item.id,
+          resposta: "nao_conforme" as const,
+          descricao: "a".repeat(item.descricaoMinima),
+        },
+      ],
+    };
+    render(<ExecucaoVisita visita={visitaComNc} />);
+
+    expect(
+      screen.getByText(
+        new RegExp(`O item ${item.codigo} está abaixo do mínimo de fotos`),
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Concluir visita" }),
+    ).toBeEnabled();
   });
 });
 
