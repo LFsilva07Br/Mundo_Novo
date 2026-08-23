@@ -16,14 +16,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { listarClientes } from "@/lib/carteira/consultas";
 import {
-  EXAMES_POR_CARGO,
-  MORADIAS_DEMO,
-  TRABALHADORES_DEMO,
-  TREINAMENTOS_DEMO,
-  vencimentoTreinamento,
-} from "@/lib/social/dados-demo";
+  CLIENTE_PADRAO_SOCIAL,
+  listarExamesCargo,
+  listarMoradias,
+  listarTrabalhadores,
+  listarTreinamentos,
+} from "@/lib/social/consultas";
 import { formatarData } from "@/lib/vencimentos";
+import { DialogoNovoTrabalhador } from "./dialogo-novo-trabalhador";
+import { DialogoRegistrarTreinamento } from "./dialogo-registrar-treinamento";
+import { SeletorCliente } from "./seletor-cliente";
 
 export const metadata: Metadata = {
   title: "Social & Colaboradores",
@@ -34,30 +38,88 @@ const moeda = new Intl.NumberFormat("pt-BR", {
   currency: "BRL",
 });
 
-export default function PaginaSocial() {
-  const homens = TRABALHADORES_DEMO.filter((t) => t.genero === "Masculino").length;
-  const mulheres = TRABALHADORES_DEMO.length - homens;
+const EH_UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function rotuloPeriodicidade(meses: number): string {
+  if (meses === 12) return "Anual";
+  if (meses === 24) return "Bienal";
+  return `A cada ${meses} meses`;
+}
+
+export default async function PaginaSocial({
+  searchParams,
+}: PageProps<"/painel/social">) {
+  const parametros = await searchParams;
+  const parametroCliente = Array.isArray(parametros.cliente)
+    ? parametros.cliente[0]
+    : parametros.cliente;
+
+  const clientes = await listarClientes();
+  const clientePadrao =
+    clientes.find((c) => c.id === CLIENTE_PADRAO_SOCIAL) ??
+    clientes.find((c) => c.nome.includes("Alto da Serra")) ??
+    clientes[0];
+  const cliente =
+    clientes.find((c) => c.id === parametroCliente) ?? clientePadrao;
+  const clienteId = cliente?.id ?? CLIENTE_PADRAO_SOCIAL;
+  // Nas ações, o cliente precisa ser um id real do banco (uuid).
+  const clienteIdFormulario = EH_UUID.test(clienteId)
+    ? clienteId
+    : CLIENTE_PADRAO_SOCIAL;
+
+  const [trabalhadores, moradias, treinamentos, examesCargo] =
+    await Promise.all([
+      listarTrabalhadores(clienteId),
+      listarMoradias(clienteId),
+      listarTreinamentos(clienteId),
+      listarExamesCargo(),
+    ]);
+
+  const fixos = trabalhadores.filter((t) => t.vinculo === "fixo").length;
+  const mulheres = trabalhadores.filter((t) => t.genero === "feminino").length;
+  const homens = trabalhadores.length - mulheres;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <div>
-        <p className="text-xs font-extrabold uppercase tracking-widest text-muted-foreground">
-          Módulo social · Fazenda Alto da Serra (Dutra da Serra)
-        </p>
-        <h1 className="text-2xl font-extrabold tracking-tight">
-          Social & Colaboradores
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Dados reais da planilha de trabalhadores da cliente. Vencimentos de
-          treinamentos e exames entram no mesmo motor de alertas dos
-          certificados.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-extrabold uppercase tracking-widest text-muted-foreground">
+            Módulo social · {cliente?.nome ?? "Cliente"}
+          </p>
+          <h1 className="text-2xl font-extrabold tracking-tight">
+            Social & Colaboradores
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Trabalhadores, moradias, treinamentos e exames do cliente.
+            Vencimentos de treinamentos e exames entram no mesmo motor de
+            alertas dos certificados.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <SeletorCliente
+            clientes={clientes.map((c) => ({ id: c.id, nome: c.nome }))}
+            clienteId={clienteId}
+          />
+          <DialogoNovoTrabalhador clienteId={clienteIdFormulario} />
+          <DialogoRegistrarTreinamento
+            treinamentos={treinamentos.map((t) => ({
+              id: t.id,
+              nome: t.nome,
+              periodicidadeMeses: t.periodicidadeMeses,
+            }))}
+            trabalhadores={trabalhadores.map((t) => ({
+              id: t.id,
+              nome: t.nome,
+            }))}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Card>
           <CardContent className="py-4">
-            <p className="text-xl font-extrabold">{TRABALHADORES_DEMO.length}</p>
+            <p className="text-xl font-extrabold">{fixos}</p>
             <p className="text-xs font-semibold text-muted-foreground">
               trabalhadores fixos
             </p>
@@ -75,9 +137,7 @@ export default function PaginaSocial() {
         </Card>
         <Card>
           <CardContent className="py-4">
-            <p className="text-xl font-extrabold">
-              {MORADIAS_DEMO.length}
-            </p>
+            <p className="text-xl font-extrabold">{moradias.length}</p>
             <p className="text-xs font-semibold text-muted-foreground">
               moradias na fazenda
             </p>
@@ -85,9 +145,7 @@ export default function PaginaSocial() {
         </Card>
         <Card>
           <CardContent className="py-4">
-            <p className="text-xl font-extrabold">
-              {TREINAMENTOS_DEMO.length}
-            </p>
+            <p className="text-xl font-extrabold">{treinamentos.length}</p>
             <p className="text-xs font-semibold text-muted-foreground">
               treinamentos monitorados
             </p>
@@ -97,7 +155,7 @@ export default function PaginaSocial() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Trabalhadores fixos e funções</CardTitle>
+          <CardTitle>Trabalhadores e funções</CardTitle>
           <CardDescription>
             Função, CBO, salário, benefícios e funções habilitadas — base da
             conformidade social/trabalhista da norma.
@@ -117,27 +175,55 @@ export default function PaginaSocial() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {TRABALHADORES_DEMO.map((t) => (
-                <TableRow key={t.nome}>
-                  <TableCell className="font-semibold">{t.nome}</TableCell>
+              {trabalhadores.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={7}
+                    className="text-center text-sm text-muted-foreground"
+                  >
+                    Nenhum trabalhador cadastrado para este cliente.
+                  </TableCell>
+                </TableRow>
+              ) : null}
+              {trabalhadores.map((t) => (
+                <TableRow key={t.id}>
+                  <TableCell className="font-semibold">
+                    {t.nome}
+                    {t.vinculo === "temporario" ? (
+                      <span className="block text-xs font-normal text-muted-foreground">
+                        Temporário
+                      </span>
+                    ) : null}
+                  </TableCell>
                   <TableCell className="text-sm">
                     {t.funcao}
-                    <span className="block text-xs text-muted-foreground">
-                      CBO {t.cbo}
-                    </span>
+                    {t.cbo ? (
+                      <span className="block text-xs text-muted-foreground">
+                        CBO {t.cbo}
+                      </span>
+                    ) : null}
                   </TableCell>
                   <TableCell className="text-right text-sm">
-                    {moeda.format(t.salario)}
+                    {t.salario !== undefined ? moeda.format(t.salario) : "—"}
                   </TableCell>
                   <TableCell className="text-sm">
-                    {formatarData(new Date(`${t.admissao}T12:00:00`))}
+                    {t.admissao
+                      ? formatarData(new Date(`${t.admissao}T12:00:00`))
+                      : "—"}
                   </TableCell>
                   <TableCell className="text-sm">
                     {t.moradia ? "Sim" : "Não"}
                   </TableCell>
                   <TableCell className="text-sm">
-                    {t.insalubridade ? (
-                      <Badge variant="outline">Insalubridade 20%</Badge>
+                    {t.insalubridade || t.periculosidade ? (
+                      <span className="flex flex-wrap gap-1">
+                        {t.insalubridade ? (
+                          <Badge variant="outline">Insalubridade 20%</Badge>
+                        ) : null}
+                        {t.periculosidade ? (
+                          <Badge variant="outline">Periculosidade</Badge>
+                        ) : null}
+                      </span>
                     ) : (
                       "—"
                     )}
@@ -163,39 +249,38 @@ export default function PaginaSocial() {
           <CardHeader>
             <CardTitle>Treinamentos (NRs)</CardTitle>
             <CardDescription>
-              Status calculado pela periodicidade — alerta antes do vencimento.
+              Status calculado pelo vencimento real das participações — alerta
+              antes de vencer.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {TREINAMENTOS_DEMO.map((t) => {
-              const vencimento = vencimentoTreinamento(t);
-              return (
-                <div
-                  key={t.nome}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl border p-3"
-                >
-                  <div>
-                    <p className="text-sm font-bold">{t.nome}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {t.periodicidadeMeses === 12 ? "Anual" : "Bienal"} ·{" "}
-                      {t.participantes}/{t.totalTrabalhadores} participantes
-                      {t.ultimaRealizacao
-                        ? ` · realizado ${formatarData(new Date(`${t.ultimaRealizacao}T12:00:00`))}`
-                        : null}
-                    </p>
-                  </div>
-                  {vencimento ? (
-                    <BadgeVencimento
-                      venceEm={vencimento.toISOString().slice(0, 10)}
-                    />
-                  ) : (
-                    <Badge variant="outline" className="text-warning">
-                      Pendente de realização
-                    </Badge>
-                  )}
+            {treinamentos.map((t) => (
+              <div
+                key={t.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border p-3"
+              >
+                <div>
+                  <p className="text-sm font-bold">
+                    {t.nome}
+                    {t.norma ? ` (${t.norma})` : ""}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {rotuloPeriodicidade(t.periodicidadeMeses)} ·{" "}
+                    {t.participantes}/{t.totalTrabalhadores} participantes
+                    {t.ultimaRealizacao
+                      ? ` · realizado ${formatarData(new Date(`${t.ultimaRealizacao}T12:00:00`))}`
+                      : null}
+                  </p>
                 </div>
-              );
-            })}
+                {t.proximoVencimento ? (
+                  <BadgeVencimento venceEm={t.proximoVencimento} />
+                ) : (
+                  <Badge variant="outline" className="text-warning">
+                    Pendente de realização
+                  </Badge>
+                )}
+              </div>
+            ))}
           </CardContent>
         </Card>
 
@@ -209,10 +294,15 @@ export default function PaginaSocial() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {MORADIAS_DEMO.map((m) => (
-                <div key={m.casa} className="rounded-xl border p-3">
+              {moradias.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Nenhuma moradia cadastrada para este cliente.
+                </p>
+              ) : null}
+              {moradias.map((m) => (
+                <div key={m.id} className="rounded-xl border p-3">
                   <p className="text-sm font-bold">
-                    {m.casa} · {m.totalMoradores} morador
+                    {m.nome} · {m.totalMoradores} morador
                     {m.totalMoradores === 1 ? "" : "es"}
                   </p>
                   {m.moradores.length > 0 ? (
@@ -236,7 +326,7 @@ export default function PaginaSocial() {
               <CardTitle>Exames ocupacionais por cargo</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {EXAMES_POR_CARGO.map((e) => (
+              {examesCargo.map((e) => (
                 <div key={e.cargo} className="rounded-xl border p-3">
                   <p className="flex items-center justify-between text-sm font-bold">
                     {e.cargo}
