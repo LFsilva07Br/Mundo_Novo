@@ -102,9 +102,8 @@ const fases: Fase[] = [
   {
     nome: "Fase 12 — Comunicação & planejamento",
     descricao:
-      "Notificações push no celular, cobrança por WhatsApp, planejamento anual de visitas (cobertura 100%), nota de prontidão para auditoria e evolução histórica da conformidade.",
-    percentual: 40,
-    observacao: "Prontidão, balanço de volume e evolução histórica entregues",
+      "Notificações no aparelho, cobrança por WhatsApp, planejamento anual de visitas (cobertura 100%), nota de prontidão para auditoria e evolução histórica da conformidade.",
+    percentual: 100,
   },
   {
     nome: "Fase 13 — Confiança & dados",

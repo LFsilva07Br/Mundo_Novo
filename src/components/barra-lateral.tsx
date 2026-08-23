@@ -9,6 +9,7 @@ import {
   Mail,
   Building2,
   CalendarClock,
+  CalendarRange,
   CircleHelp,
   ClipboardCheck,
   FileSignature,
@@ -23,6 +24,7 @@ import {
   SprayCan,
   Users,
   UsersRound,
+  Wallet,
   Workflow,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -42,6 +44,7 @@ const visaoGeral: ItemNavegacao[] = [
   { rotulo: "Contratos", href: "/painel/contratos", icone: FileSignature, disponivel: true },
   { rotulo: "Certificações", href: "/painel/workflow", icone: Workflow, disponivel: true },
   { rotulo: "Agenda", href: "/painel/agenda", icone: CalendarClock, disponivel: true },
+  { rotulo: "Planejamento anual", href: "/painel/planejamento", icone: CalendarRange, disponivel: true },
   { rotulo: "Visitas", href: "/painel/visitas", icone: ClipboardCheck, disponivel: true },
   { rotulo: "CAPAs", href: "/painel/capas", icone: ShieldCheck, disponivel: true },
   { rotulo: "Social & Colaboradores", href: "/painel/social", icone: UsersRound, disponivel: true },
@@ -58,6 +61,7 @@ const configuracao: ItemNavegacao[] = [
   { rotulo: "Usuários & Permissões", href: "/painel/usuarios", icone: Landmark, disponivel: true },
   { rotulo: "Relatórios", href: "/painel/relatorios", icone: BookOpen, disponivel: true },
   { rotulo: "E-mails", href: "/painel/emails", icone: Mail, disponivel: true },
+  { rotulo: "Financeiro", href: "/painel/financeiro", icone: Wallet, disponivel: true },
 ];
 
 function GrupoNavegacao({
