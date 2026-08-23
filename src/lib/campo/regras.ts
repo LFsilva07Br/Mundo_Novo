@@ -1,4 +1,4 @@
-import type { ItemVersao } from "@/lib/checklists/tipos";
+import type { ItemVersao, Resposta } from "@/lib/checklists/tipos";
 import {
   itensObrigatoriosPendentes,
   tamanhoDescricao,
@@ -42,6 +42,119 @@ export function calcularDimensoesFoto(
 /** Fotos já anexadas a um item da visita. */
 export function fotosDoItem(fotos: FotoLocal[], itemId: string): FotoLocal[] {
   return fotos.filter((f) => f.itemId === itemId);
+}
+
+/** Ids dos itens marcados como não conforme. */
+export function itensComNaoConformidade(
+  respostas: Pick<RespostaLocal, "itemId" | "resposta">[],
+): Set<string> {
+  return new Set(
+    respostas.filter((r) => r.resposta === "nao_conforme").map((r) => r.itemId),
+  );
+}
+
+/**
+ * Fotos que realmente vão ao escritório: só evidenciam NÃO CONFORMIDADES.
+ *
+ * Se o consultor tirou fotos, mudou a resposta para conforme/N.A. e seguiu
+ * em frente, as fotos continuam guardadas no aparelho (para o caso de ele
+ * voltar atrás), mas NÃO podem viajar escondidas no envio — do outro lado
+ * elas apareceriam sem nenhuma não conformidade que as explique.
+ */
+export function fotosParaEnvio(
+  respostas: Pick<RespostaLocal, "itemId" | "resposta">[],
+  fotos: FotoLocal[],
+): FotoLocal[] {
+  const comNc = itensComNaoConformidade(respostas);
+  return fotos.filter((f) => comNc.has(f.itemId));
+}
+
+/**
+ * Fotos guardadas no aparelho que hoje não seriam enviadas, porque o item
+ * deixou de ser não conformidade. A tela avisa o consultor — nada some sem
+ * ele saber.
+ */
+export function fotosGuardadasSemNc(
+  respostas: Pick<RespostaLocal, "itemId" | "resposta">[],
+  fotos: FotoLocal[],
+): FotoLocal[] {
+  const comNc = itensComNaoConformidade(respostas);
+  return fotos.filter((f) => !comNc.has(f.itemId));
+}
+
+/**
+ * Troca a resposta de um item PRESERVANDO o que já foi digitado.
+ *
+ * Ao sair de "não conforme", a descrição não é apagada: ela vai para
+ * `descricaoGuardada` e volta inteira se o consultor marcar NC de novo.
+ * Debaixo de sol e com luvas, um toque errado não pode custar um laudo.
+ */
+export function aplicarResposta(
+  respostas: RespostaLocal[],
+  itemId: string,
+  resposta: Resposta,
+): RespostaLocal[] {
+  const anterior = respostas.find((r) => r.itemId === itemId);
+  const guardadaAnterior = anterior?.descricaoGuardada ?? null;
+
+  const nova: RespostaLocal =
+    resposta === "nao_conforme"
+      ? {
+          itemId,
+          resposta,
+          // Volta o que estava guardado quando o item deixou de ser NC.
+          descricao: anterior?.descricao ?? guardadaAnterior ?? "",
+          descricaoGuardada: null,
+        }
+      : {
+          itemId,
+          resposta,
+          descricao: null,
+          descricaoGuardada: anterior?.descricao?.trim()
+            ? anterior.descricao
+            : guardadaAnterior,
+        };
+
+  return respostas.map((r) => (r.itemId === itemId ? nova : r)).concat(
+    anterior ? [] : [nova],
+  );
+}
+
+export type DivergenciaVersao = {
+  /** O checklist do pacote mudou depois que a visita começou. */
+  divergente: boolean;
+  /** Respostas já dadas cujo item não existe mais no checklist atual. */
+  respostasOrfas: number;
+  /** Fotos já tiradas cujo item não existe mais no checklist atual. */
+  fotosOrfas: number;
+};
+
+/**
+ * A visita nasce presa a uma versão publicada do checklist. Se o pacote de
+ * dados for atualizado no meio do caminho, os itens da tela passam a ser de
+ * outra versão e as respostas já gravadas somem da vista — parecem perdidas.
+ * Isto detecta o caso para a tela avisar, em vez de fingir que nada houve.
+ */
+export function divergenciaDeVersao(
+  visita: Pick<VisitaLocal, "versaoChecklistId" | "respostas" | "fotos">,
+  versaoAtualId: string | null,
+  itens: Pick<ItemVersao, "id">[],
+): DivergenciaVersao {
+  const idsAtuais = new Set(itens.map((i) => i.id));
+  const respostasOrfas = visita.respostas.filter(
+    (r) => !idsAtuais.has(r.itemId),
+  ).length;
+  const fotosOrfas = visita.fotos.filter((f) => !idsAtuais.has(f.itemId)).length;
+  const versaoTrocou =
+    visita.versaoChecklistId !== null &&
+    versaoAtualId !== null &&
+    visita.versaoChecklistId !== versaoAtualId;
+
+  return {
+    divergente: versaoTrocou || respostasOrfas > 0 || fotosOrfas > 0,
+    respostasOrfas,
+    fotosOrfas,
+  };
 }
 
 /** Progresso da visita: respondidos / total de itens (0 a 100). */
@@ -117,7 +230,8 @@ export function validarConclusaoCampo(
 
 /**
  * Monta o corpo do POST /api/campo/sync a partir da visita local.
- * Só visitas concluídas podem ser enviadas.
+ * Só visitas concluídas podem ser enviadas. Fotos de itens que deixaram de
+ * ser não conformidade ficam no aparelho e NÃO entram no envio.
  */
 export function montarPayloadSync(visita: VisitaLocal): PayloadSync {
   if (!visita.concluidaEm) {
@@ -137,7 +251,7 @@ export function montarPayloadSync(visita: VisitaLocal): PayloadSync {
       resposta: r.resposta,
       descricao: r.descricao,
     })),
-    fotos: visita.fotos.map((f) => ({
+    fotos: fotosParaEnvio(visita.respostas, visita.fotos).map((f) => ({
       itemId: f.itemId,
       dataUrl: f.dataUrl,
       gps: f.gps,

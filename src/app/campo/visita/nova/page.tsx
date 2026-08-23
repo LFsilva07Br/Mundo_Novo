@@ -2,13 +2,13 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { MapPin, Play } from "lucide-react";
+import { AlertTriangle, MapPin, Play } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SelectNativo } from "@/components/select-nativo";
-import { salvarVisitaLocal } from "@/lib/campo/banco-local";
+import { gravarVisita } from "@/lib/campo/gravacao";
 import { capturarGps } from "@/lib/campo/midia";
 import { obterOuBaixarPacote } from "@/lib/campo/pacote";
 import type { PacoteCampo } from "@/lib/campo/tipos";
@@ -49,6 +49,7 @@ function FormularioNovaVisita() {
     "buscando",
   );
   const [iniciando, setIniciando] = useState(false);
+  const [falhaGravacao, setFalhaGravacao] = useState<string | null>(null);
 
   useEffect(() => {
     void obterOuBaixarPacote().then((p) => {
@@ -67,8 +68,9 @@ function FormularioNovaVisita() {
   async function iniciarVisita() {
     if (!cliente) return;
     setIniciando(true);
+    setFalhaGravacao(null);
     const idLocal = crypto.randomUUID();
-    await salvarVisitaLocal({
+    const gravou = await gravarVisita({
       idLocal,
       clienteId: cliente.id,
       clienteNome: cliente.nome,
@@ -84,6 +86,13 @@ function FormularioNovaVisita() {
       sincronizadaEm: null,
       erroSincronizacao: null,
     });
+    if (!gravou.ok) {
+      // Sem gravação a visita não existe: melhor barrar aqui do que deixar
+      // o consultor preencher um checklist inteiro que não será salvo.
+      setFalhaGravacao(gravou.mensagem);
+      setIniciando(false);
+      return;
+    }
     roteador.push(`/campo/visita/${idLocal}`);
   }
 
@@ -159,6 +168,16 @@ function FormularioNovaVisita() {
             <p className="rounded-xl bg-warning/10 p-3 text-xs font-semibold text-warning">
               Nenhuma versão publicada do checklist no pacote — atualize o
               pacote de dados na tela Sincronizar.
+            </p>
+          ) : null}
+
+          {falhaGravacao ? (
+            <p
+              role="alert"
+              className="flex items-start gap-2 rounded-xl border border-destructive bg-destructive p-3 text-xs font-bold text-white"
+            >
+              <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+              {falhaGravacao}
             </p>
           ) : null}
 

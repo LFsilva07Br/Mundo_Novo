@@ -86,6 +86,10 @@ vi.mock("@/lib/campo/banco-local", () => ({
   obterVisitaLocal: vi.fn(async () => null),
   listarVisitasLocais: vi.fn(async () => [VISITA_NA_FILA]),
   removerVisitaLocal: vi.fn(),
+  // O convite de instalação guarda a dispensa na gaveta `config`.
+  gravarConfigLocal: vi.fn(async () => undefined),
+  obterConfigLocal: vi.fn(async () => null),
+  removerConfigLocal: vi.fn(),
 }));
 
 vi.mock("@/lib/campo/pacote", () => ({
@@ -116,6 +120,16 @@ describe("Início do campo", () => {
     // Fila de envio com 1 visita concluída aguardando.
     expect(
       screen.getByText(/1 visita aguardando envio/, { exact: false }),
+    ).toBeInTheDocument();
+  });
+
+  it("convida a instalar o app na tela de início, de forma dispensável", async () => {
+    render(<PaginaInicioCampo />);
+    expect(
+      await screen.findByText("Instale o app na tela de início"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Dispensar convite de instalação" }),
     ).toBeInTheDocument();
   });
 });

@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { ItemVersao } from "@/lib/checklists/tipos";
 import {
+  aplicarResposta,
   calcularDimensoesFoto,
+  divergenciaDeVersao,
   formatarBytes,
   fotosDoItem,
+  fotosGuardadasSemNc,
+  fotosParaEnvio,
   montarPayloadSync,
   progressoVisita,
   saudacaoDoDia,
@@ -153,7 +157,9 @@ describe("montarPayloadSync", () => {
     const concluida = visita({
       concluidaEm: "2026-08-23T12:00:00Z",
       gpsFim: "-21.2,-45.1",
-      respostas: [{ itemId: "a", resposta: "conforme", descricao: null }],
+      respostas: [
+        { itemId: "a", resposta: "nao_conforme", descricao: "Descrição da NC." },
+      ],
       fotos: [foto("a")],
       assinatura: { dataUrl: "data:image/png;base64,BBBB", nome: "João Produtor" },
       sincronizadaEm: null,
@@ -170,7 +176,9 @@ describe("montarPayloadSync", () => {
       concluidaEm: "2026-08-23T12:00:00Z",
       gpsInicio: "-21.0,-45.0",
       gpsFim: "-21.2,-45.1",
-      respostas: [{ itemId: "a", resposta: "conforme", descricao: null }],
+      respostas: [
+        { itemId: "a", resposta: "nao_conforme", descricao: "Descrição da NC." },
+      ],
       fotos: [foto("a")],
       assinatura: { dataUrl: "data:image/png;base64,BBBB", nome: "João Produtor" },
     });
@@ -179,8 +187,166 @@ describe("montarPayloadSync", () => {
     expect(payload).not.toHaveProperty("erroSincronizacao");
   });
 
+  it("não envia fotos órfãs de itens que deixaram de ser não conformidade", () => {
+    const concluida = visita({
+      concluidaEm: "2026-08-23T12:00:00Z",
+      respostas: [
+        // O consultor tirou fotos, mudou a resposta e seguiu em frente.
+        { itemId: "a", resposta: "conforme", descricao: null },
+        { itemId: "b", resposta: "nao_aplicavel", descricao: null },
+        { itemId: "c", resposta: "nao_conforme", descricao: "Descrição da NC." },
+      ],
+      fotos: [foto("a"), foto("b"), foto("c"), foto("c")],
+    });
+
+    const payload = montarPayloadSync(concluida);
+    expect(payload.fotos).toHaveLength(2);
+    expect(payload.fotos.every((f) => f.itemId === "c")).toBe(true);
+  });
+
+  it("não envia a descrição guardada de um item que não é mais NC", () => {
+    const concluida = visita({
+      concluidaEm: "2026-08-23T12:00:00Z",
+      respostas: [
+        {
+          itemId: "a",
+          resposta: "conforme",
+          descricao: null,
+          descricaoGuardada: "Rascunho que só interessa ao aparelho.",
+        },
+      ],
+    });
+
+    expect(montarPayloadSync(concluida).respostas).toEqual([
+      { itemId: "a", resposta: "conforme", descricao: null },
+    ]);
+  });
+
   it("recusa visita ainda em andamento", () => {
     expect(() => montarPayloadSync(visita())).toThrow(/concluídas/);
+  });
+});
+
+describe("aplicarResposta", () => {
+  it("guarda a descrição da NC ao trocar para conforme e devolve ao voltar", () => {
+    const original = "Cocho de defensivos sem contenção, risco de vazamento.";
+
+    const conforme = aplicarResposta(
+      [{ itemId: "a", resposta: "nao_conforme", descricao: original }],
+      "a",
+      "conforme",
+    );
+    // A descrição sai do campo visível, mas NÃO é descartada.
+    expect(conforme[0].descricao).toBeNull();
+    expect(conforme[0].descricaoGuardada).toBe(original);
+
+    const deVolta = aplicarResposta(conforme, "a", "nao_conforme");
+    expect(deVolta[0].descricao).toBe(original);
+    expect(deVolta[0].descricaoGuardada).toBeNull();
+  });
+
+  it("mantém a descrição guardada mesmo passando por várias respostas", () => {
+    const original = "Descrição detalhada da não conformidade.";
+    let respostas = aplicarResposta(
+      [{ itemId: "a", resposta: "nao_conforme", descricao: original }],
+      "a",
+      "conforme",
+    );
+    respostas = aplicarResposta(respostas, "a", "nao_aplicavel");
+    respostas = aplicarResposta(respostas, "a", "conforme");
+    respostas = aplicarResposta(respostas, "a", "nao_conforme");
+
+    expect(respostas[0].descricao).toBe(original);
+  });
+
+  it("não guarda descrição em branco", () => {
+    const respostas = aplicarResposta(
+      [{ itemId: "a", resposta: "nao_conforme", descricao: "   " }],
+      "a",
+      "conforme",
+    );
+    expect(respostas[0].descricaoGuardada).toBeNull();
+  });
+
+  it("cria a resposta nova sem mexer nas dos outros itens e sem reordenar", () => {
+    const respostas = aplicarResposta(
+      [
+        { itemId: "a", resposta: "conforme", descricao: null },
+        { itemId: "b", resposta: "conforme", descricao: null },
+      ],
+      "a",
+      "nao_conforme",
+    );
+    expect(respostas.map((r) => r.itemId)).toEqual(["a", "b"]);
+    expect(respostas[0].resposta).toBe("nao_conforme");
+    expect(respostas[0].descricao).toBe("");
+    expect(respostas[1]).toEqual({
+      itemId: "b",
+      resposta: "conforme",
+      descricao: null,
+    });
+
+    const comNovo = aplicarResposta(respostas, "c", "conforme");
+    expect(comNovo.map((r) => r.itemId)).toEqual(["a", "b", "c"]);
+  });
+});
+
+describe("fotos guardadas sem NC", () => {
+  const respostas = [
+    { itemId: "a", resposta: "conforme" as const },
+    { itemId: "c", resposta: "nao_conforme" as const },
+  ];
+
+  it("fotosParaEnvio só devolve evidências de não conformidade", () => {
+    expect(fotosParaEnvio(respostas, [foto("a"), foto("c")])).toEqual([foto("c")]);
+  });
+
+  it("fotosGuardadasSemNc aponta o que fica invisível no aparelho", () => {
+    expect(fotosGuardadasSemNc(respostas, [foto("a"), foto("c")])).toEqual([
+      foto("a"),
+    ]);
+  });
+});
+
+describe("divergenciaDeVersao", () => {
+  const itens = [item("a"), item("b")];
+
+  it("não acusa nada quando a visita usa a versão publicada atual", () => {
+    const atual = visita({
+      versaoChecklistId: "versao-1",
+      respostas: [{ itemId: "a", resposta: "conforme", descricao: null }],
+      fotos: [],
+    });
+    expect(divergenciaDeVersao(atual, "versao-1", itens)).toEqual({
+      divergente: false,
+      respostasOrfas: 0,
+      fotosOrfas: 0,
+    });
+  });
+
+  it("acusa o pacote atualizado no meio da visita e conta o que sumiu da tela", () => {
+    const antiga = visita({
+      versaoChecklistId: "versao-1",
+      respostas: [
+        { itemId: "a", resposta: "conforme", descricao: null },
+        { itemId: "antigo", resposta: "nao_conforme", descricao: "NC." },
+      ],
+      fotos: [foto("antigo"), foto("antigo")],
+    });
+
+    expect(divergenciaDeVersao(antiga, "versao-2", itens)).toEqual({
+      divergente: true,
+      respostasOrfas: 1,
+      fotosOrfas: 2,
+    });
+  });
+
+  it("acusa divergência mesmo sem saber a versão, se há respostas órfãs", () => {
+    const orfa = visita({
+      versaoChecklistId: null,
+      respostas: [{ itemId: "sumiu", resposta: "conforme", descricao: null }],
+    });
+    expect(divergenciaDeVersao(orfa, null, itens).divergente).toBe(true);
   });
 });
 
