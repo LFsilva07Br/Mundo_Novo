@@ -8,6 +8,7 @@ vi.mock("next/navigation", () => ({
     throw new Error(`REDIRECT:${destino}`);
   }),
   usePathname: () => "/painel",
+  useRouter: () => ({ push: vi.fn() }),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -17,6 +18,13 @@ vi.mock("@/lib/supabase/server", () => ({
 
 // O Toaster do sonner depende de window.matchMedia, que o jsdom não tem.
 vi.mock("@/components/ui/sonner", () => ({ Toaster: () => null }));
+
+// A busca global do cabeçalho carrega a carteira; aqui basta uma lista curta.
+vi.mock("@/lib/carteira/consultas", () => ({
+  listarClientes: vi.fn(async () => [
+    { id: "cedro", nome: "Fazenda Cedro", cidade: "Serra do Salitre", uf: "MG" },
+  ]),
+}));
 
 const criarClienteMock = vi.mocked(createClient);
 const usuarioAtualMock = vi.mocked(getUsuarioAtual);
