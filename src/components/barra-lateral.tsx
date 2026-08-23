@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import {
   Bell,
   BookOpen,
+  Coins,
+  Mail,
   Building2,
   CalendarClock,
   CircleHelp,
@@ -39,6 +41,7 @@ const visaoGeral: ItemNavegacao[] = [
   { rotulo: "Visitas", href: "/painel/visitas", icone: ClipboardCheck, disponivel: true },
   { rotulo: "CAPAs", href: "/painel/capas", icone: ShieldCheck, disponivel: true },
   { rotulo: "Social & Colaboradores", href: "/painel/social", icone: UsersRound, disponivel: true },
+  { rotulo: "Comercialização", href: "/painel/comercializacao", icone: Coins, disponivel: true },
 ];
 
 const configuracao: ItemNavegacao[] = [
@@ -46,6 +49,7 @@ const configuracao: ItemNavegacao[] = [
   { rotulo: "Alertas & Automação", href: "/painel/automacao", icone: Bell, disponivel: true },
   { rotulo: "Usuários & Permissões", href: "/painel/usuarios", icone: Landmark, disponivel: true },
   { rotulo: "Relatórios", href: "/painel/relatorios", icone: BookOpen, disponivel: true },
+  { rotulo: "E-mails", href: "/painel/emails", icone: Mail, disponivel: true },
 ];
 
 function GrupoNavegacao({
