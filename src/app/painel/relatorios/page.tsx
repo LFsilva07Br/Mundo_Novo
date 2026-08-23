@@ -21,8 +21,12 @@ import {
   HISTORICO_SAFRAS_ALTO_DA_SERRA,
   TALHOES_ALTO_DA_SERRA,
 } from "@/lib/carteira/talhoes-demo";
+import { balancoDaCarteira } from "@/lib/prontidao/balanco";
+import { evolucaoDaCarteira } from "@/lib/prontidao/historico";
 import { formatarArea } from "@/lib/vencimentos";
 import { BotoesExportar, CartaoRelatorioMensal } from "./exportar";
+import { SecaoBalanco } from "./secao-balanco";
+import { SecaoEvolucao } from "./secao-evolucao";
 
 export const metadata: Metadata = {
   title: "Relatórios",
@@ -38,7 +42,11 @@ const AREA_RESERVA = 30.658;
 const AREA_OUTROS = AREA_TOTAL - AREA_CAFE - AREA_APP - AREA_RESERVA;
 
 export default async function PaginaRelatorios() {
-  const clientes = await listarClientes();
+  const [clientes, balancos, evolucao] = await Promise.all([
+    listarClientes(),
+    balancoDaCarteira(),
+    evolucaoDaCarteira(),
+  ]);
   const clienteSafra =
     clientes.find((c) => c.nome.includes("Alto da Serra")) ?? clientes[0];
   const previsaoTotal = TALHOES_ALTO_DA_SERRA.reduce(
@@ -208,6 +216,17 @@ export default async function PaginaRelatorios() {
           </CardContent>
         </Card>
       </div>
+
+      <SecaoBalanco balancos={balancos} />
+
+      <SecaoEvolucao
+        series={evolucao}
+        clientes={clientes.map((c) => ({
+          id: c.id,
+          nome: c.nome,
+          conformidade: c.conformidade,
+        }))}
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
