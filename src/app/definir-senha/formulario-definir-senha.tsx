@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import { confirmarTrocaSenha } from "./acoes";
 
 export function FormularioDefinirSenha() {
   const router = useRouter();
@@ -67,12 +68,14 @@ export function FormularioDefinirSenha() {
     setSalvando(true);
     setErro(null);
     const { error } = await supabase.auth.updateUser({ password: senha });
-    setSalvando(false);
 
     if (error) {
+      setSalvando(false);
       setErro("Não foi possível salvar a senha. Tente novamente.");
       return;
     }
+    await confirmarTrocaSenha();
+    setSalvando(false);
     router.replace("/painel");
   }
 

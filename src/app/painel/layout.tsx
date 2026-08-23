@@ -1,14 +1,28 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { BarraLateral } from "@/components/barra-lateral";
 import { Toaster } from "@/components/ui/sonner";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
-import { getUsuarioAtual } from "@/lib/supabase/server";
+import { createClient, getUsuarioAtual } from "@/lib/supabase/server";
 
 export default async function LayoutPainel({
   children,
 }: LayoutProps<"/painel">) {
   const usuario = await getUsuarioAtual();
   const modoDemo = !hasSupabaseEnv();
+
+  // Senha provisória: obriga a definir a própria senha antes de usar o painel.
+  if (usuario) {
+    const supabase = await createClient();
+    const { data: perfil } = (await supabase!
+      .from("perfis")
+      .select("deve_trocar_senha")
+      .eq("id", usuario.id)
+      .maybeSingle()) as { data: { deve_trocar_senha: boolean } | null };
+    if (perfil?.deve_trocar_senha) {
+      redirect("/definir-senha?obrigatoria=1");
+    }
+  }
 
   return (
     <div className="flex min-h-dvh flex-1">
