@@ -14,6 +14,7 @@ import {
   clientesDoGrupo,
   listarGrupos,
 } from "@/lib/carteira/consultas";
+import { FormularioGrupo } from "./formulario-grupo";
 
 export const metadata: Metadata = {
   title: "Grupos",
@@ -32,11 +33,14 @@ export default async function PaginaGrupos() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <div>
-        <p className="text-xs font-extrabold uppercase tracking-widest text-muted-foreground">
-          Estrutura da carteira
-        </p>
-        <h1 className="text-2xl font-extrabold tracking-tight">Grupos</h1>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-xs font-extrabold uppercase tracking-widest text-muted-foreground">
+            Estrutura da carteira
+          </p>
+          <h1 className="text-2xl font-extrabold tracking-tight">Grupos</h1>
+        </div>
+        <FormularioGrupo />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -55,10 +59,13 @@ export default async function PaginaGrupos() {
           return (
             <Card key={grupo.id}>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Building2 className="size-4 text-primary" />
-                  {grupo.nome}
-                </CardTitle>
+                <div className="flex items-start justify-between gap-2">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Building2 className="size-4 text-primary" />
+                    {grupo.nome}
+                  </CardTitle>
+                  <FormularioGrupo grupo={grupo} />
+                </div>
                 <CardDescription>
                   {grupo.administracao === "mundo_novo" ? (
                     <>Administrado pela Mundo Novo</>
