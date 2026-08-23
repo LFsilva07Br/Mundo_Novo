@@ -12,6 +12,7 @@ import {
   CircleHelp,
   ClipboardCheck,
   FileSignature,
+  Globe,
   Landmark,
   LayoutDashboard,
   Leaf,
@@ -48,6 +49,7 @@ const visaoGeral: ItemNavegacao[] = [
   { rotulo: "Agroquímicos", href: "/painel/agro", icone: SprayCan, disponivel: true },
   { rotulo: "Auditoria Externa", href: "/painel/auditoria-externa", icone: SearchCheck, disponivel: true },
   { rotulo: "Sustentabilidade (DS/DI)", href: "/painel/sustentabilidade", icone: Leaf, disponivel: true },
+  { rotulo: "EUDR (exportação UE)", href: "/painel/eudr", icone: Globe, disponivel: true },
 ];
 
 const configuracao: ItemNavegacao[] = [
