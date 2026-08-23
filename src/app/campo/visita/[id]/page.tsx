@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { use, useEffect, useRef, useState } from "react";
 import { Camera, Check, CheckCircle2, MapPin, Send, X } from "lucide-react";
-import { AssinaturaCanvas } from "@/components/campo/assinatura-canvas";
+import { QuadroAssinatura } from "@/components/assinatura/quadro-assinatura";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -261,7 +261,7 @@ export default function PaginaVisita({
                 Quem acompanhou a visita assina aqui, direto na tela.
               </p>
             </div>
-            <AssinaturaCanvas onChange={setAssinaturaDataUrl} />
+            <QuadroAssinatura onChange={setAssinaturaDataUrl} />
             <div className="space-y-1.5">
               <Label htmlFor="nome-assinante">Nome de quem assina</Label>
               <Input

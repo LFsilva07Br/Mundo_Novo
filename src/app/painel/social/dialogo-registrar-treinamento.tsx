@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, PenLine } from "lucide-react";
+import { QuadroAssinatura } from "@/components/assinatura/quadro-assinatura";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -40,10 +41,36 @@ export function DialogoRegistrarTreinamento({
   trabalhadores: OpcaoTrabalhador[];
 }) {
   const [aberto, setAberto] = useState(false);
+  // Colaboradores marcados na turma e assinaturas colhidas na tela.
+  const [marcados, setMarcados] = useState<string[]>([]);
+  const [assinaturas, setAssinaturas] = useState<Record<string, string>>({});
+  const [assinando, setAssinando] = useState<string | null>(null);
   const [estado, acao, pendente] = useActionState<EstadoAcao, FormData>(
     registrarParticipacaoTreinamento,
     null,
   );
+
+  function alternarMarcado(id: string, marcado: boolean) {
+    setMarcados((atuais) =>
+      marcado ? [...atuais, id] : atuais.filter((m) => m !== id),
+    );
+    if (!marcado && assinando === id) setAssinando(null);
+  }
+
+  function registrarAssinatura(dataUrl: string | null) {
+    if (!assinando) return;
+    const id = assinando;
+    setAssinaturas((atuais) => {
+      if (dataUrl === null) {
+        const restantes = { ...atuais };
+        delete restantes[id];
+        return restantes;
+      }
+      return { ...atuais, [id]: dataUrl };
+    });
+  }
+
+  const nomeAssinando = trabalhadores.find((t) => t.id === assinando)?.nome;
 
   return (
     <>
@@ -89,18 +116,65 @@ export function DialogoRegistrarTreinamento({
               </legend>
               <div className="grid gap-1.5">
                 {trabalhadores.map((t) => (
-                  <label key={t.id} className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      name="trabalhadorIds"
-                      value={t.id}
-                      className="size-4"
-                    />
-                    {t.nome}
-                  </label>
+                  <div
+                    key={t.id}
+                    className="flex items-center justify-between gap-2"
+                  >
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        name="trabalhadorIds"
+                        value={t.id}
+                        className="size-4"
+                        onChange={(e) =>
+                          alternarMarcado(t.id, e.currentTarget.checked)
+                        }
+                      />
+                      {t.nome}
+                    </label>
+                    {marcados.includes(t.id) ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setAssinando(t.id)}
+                      >
+                        <PenLine className="size-3.5" />
+                        {assinaturas[t.id] ? "Assinado ✓" : "Assinar"}
+                      </Button>
+                    ) : null}
+                  </div>
                 ))}
               </div>
             </fieldset>
+
+            {assinando ? (
+              <div className="space-y-2 rounded-xl border p-3">
+                <p className="text-sm font-medium">
+                  Assinatura de {nomeAssinando} (opcional)
+                </p>
+                <QuadroAssinatura key={assinando} onChange={registrarAssinatura} />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAssinando(null)}
+                >
+                  Concluir assinatura
+                </Button>
+              </div>
+            ) : null}
+
+            {marcados
+              .filter((id) => assinaturas[id])
+              .map((id) => (
+                <input
+                  key={id}
+                  type="hidden"
+                  name={`assinatura-${id}`}
+                  value={assinaturas[id]}
+                />
+              ))}
 
             <div className="space-y-2">
               <Label htmlFor="participacao-data">Data de realização</Label>

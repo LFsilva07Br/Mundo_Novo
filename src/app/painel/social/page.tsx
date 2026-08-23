@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { FileDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { BadgeVencimento } from "@/components/badge-vencimento";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -24,7 +27,9 @@ import {
   listarTrabalhadores,
   listarTreinamentos,
 } from "@/lib/social/consultas";
+import { listarFichasEpi } from "@/lib/social/epis";
 import { formatarData } from "@/lib/vencimentos";
+import { DialogoEntregarEpi } from "./dialogo-entregar-epi";
 import { DialogoNovoTrabalhador } from "./dialogo-novo-trabalhador";
 import { DialogoRegistrarTreinamento } from "./dialogo-registrar-treinamento";
 import { SeletorCliente } from "./seletor-cliente";
@@ -68,12 +73,13 @@ export default async function PaginaSocial({
     ? clienteId
     : CLIENTE_PADRAO_SOCIAL;
 
-  const [trabalhadores, moradias, treinamentos, examesCargo] =
+  const [trabalhadores, moradias, treinamentos, examesCargo, fichasEpi] =
     await Promise.all([
       listarTrabalhadores(clienteId),
       listarMoradias(clienteId),
       listarTreinamentos(clienteId),
       listarExamesCargo(),
+      listarFichasEpi(clienteId),
     ]);
 
   const fixos = trabalhadores.filter((t) => t.vinculo === "fixo").length;
@@ -244,6 +250,74 @@ export default async function PaginaSocial({
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader className="flex flex-wrap items-start justify-between gap-2">
+          <div className="space-y-1.5">
+            <CardTitle>EPIs — fichas de entrega</CardTitle>
+            <CardDescription>
+              Cada entrega vira uma ficha com CA, quantidade e a assinatura do
+              colaborador colhida na tela.
+            </CardDescription>
+          </div>
+          <DialogoEntregarEpi
+            trabalhadores={trabalhadores.map((t) => ({
+              id: t.id,
+              nome: t.nome,
+            }))}
+          />
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Colaborador(a)</TableHead>
+                <TableHead>EPI</TableHead>
+                <TableHead>CA</TableHead>
+                <TableHead className="text-right">Qtd.</TableHead>
+                <TableHead>Entrega</TableHead>
+                <TableHead>Assinado</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {fichasEpi.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className="text-center text-sm text-muted-foreground"
+                  >
+                    Nenhuma entrega de EPI registrada para este cliente.
+                  </TableCell>
+                </TableRow>
+              ) : null}
+              {fichasEpi.map((f) => (
+                <TableRow key={f.id}>
+                  <TableCell className="font-semibold">
+                    {f.trabalhadorNome}
+                  </TableCell>
+                  <TableCell className="text-sm">{f.epi}</TableCell>
+                  <TableCell className="text-sm">{f.ca ?? "—"}</TableCell>
+                  <TableCell className="text-right text-sm">
+                    {f.quantidade}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {formatarData(new Date(`${f.entregueEm}T12:00:00`))}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {f.assinada ? (
+                      <Badge variant="secondary">Assinado ✓</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-warning">
+                        Sem assinatura
+                      </Badge>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -270,15 +344,32 @@ export default async function PaginaSocial({
                     {t.ultimaRealizacao
                       ? ` · realizado ${formatarData(new Date(`${t.ultimaRealizacao}T12:00:00`))}`
                       : null}
+                    {t.ultimaRealizacao
+                      ? ` · assinaturas ${t.assinaturasUltimaTurma ?? 0}/${t.participantesUltimaTurma ?? 0}`
+                      : null}
                   </p>
                 </div>
-                {t.proximoVencimento ? (
-                  <BadgeVencimento venceEm={t.proximoVencimento} />
-                ) : (
-                  <Badge variant="outline" className="text-warning">
-                    Pendente de realização
-                  </Badge>
-                )}
+                <span className="flex items-center gap-2">
+                  {t.ultimaRealizacao ? (
+                    <a
+                      href={`/api/social/ata?treinamento=${encodeURIComponent(t.id)}&data=${t.ultimaRealizacao}`}
+                      className={cn(
+                        buttonVariants({ variant: "outline", size: "sm" }),
+                        "gap-1.5",
+                      )}
+                    >
+                      <FileDown className="size-3.5" />
+                      Gerar ata (PDF)
+                    </a>
+                  ) : null}
+                  {t.proximoVencimento ? (
+                    <BadgeVencimento venceEm={t.proximoVencimento} />
+                  ) : (
+                    <Badge variant="outline" className="text-warning">
+                      Pendente de realização
+                    </Badge>
+                  )}
+                </span>
               </div>
             ))}
           </CardContent>
