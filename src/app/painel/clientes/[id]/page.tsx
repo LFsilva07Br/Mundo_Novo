@@ -26,8 +26,10 @@ import {
   ROTULO_NORMA,
   ROTULO_TIPO_REGISTRO,
 } from "@/lib/carteira/tipos";
+import { listarVisitas } from "@/lib/checklists/consultas";
 import { formatarArea, formatarData } from "@/lib/vencimentos";
 import { FormularioCliente } from "../formulario-cliente";
+import { AuditoriasCliente } from "./auditorias-cliente";
 import { ContatosCliente } from "./contatos-cliente";
 import { FormularioRegistroContato } from "./formulario-registro-contato";
 
@@ -46,10 +48,12 @@ export default async function PaginaCliente({
   const cliente = await obterCliente(id);
   if (!cliente) notFound();
 
-  const [grupos, registros] = await Promise.all([
+  const [grupos, registros, visitas] = await Promise.all([
     listarGrupos(),
     listarRegistrosContato(cliente.id),
+    listarVisitas(cliente.id),
   ]);
+  const auditorias = visitas.filter((v) => v.status !== "em_andamento");
   const grupo = grupos.find((g) => g.id === cliente.grupoId);
   const areaTotal =
     cliente.imoveis?.reduce((s, i) => s + i.areaTotalHa, 0) ?? null;
@@ -171,6 +175,8 @@ export default async function PaginaCliente({
           ))}
         </CardContent>
       </Card>
+
+      <AuditoriasCliente visitas={auditorias} />
 
       <ContatosCliente
         clienteId={cliente.id}

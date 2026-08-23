@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   calcularConformidade,
+  calcularConformidadeCliente,
   itensObrigatoriosPendentes,
   tamanhoDescricao,
   validarConclusaoVisita,
@@ -102,5 +103,44 @@ describe("calcularConformidade — conformes ÷ (respondidos − N.A.)", () => {
         { resposta: "nao_aplicavel" },
       ]),
     ).toBeNull();
+  });
+});
+
+describe("calcularConformidadeCliente — média das visitas concluídas", () => {
+  it("sem visitas retorna null (o cliente não é alterado)", () => {
+    expect(calcularConformidadeCliente([])).toBeNull();
+  });
+
+  it("ignora visitas sem conformidade calculável (null)", () => {
+    expect(
+      calcularConformidadeCliente([
+        { conformidade: 90 },
+        { conformidade: null },
+        { conformidade: 70 },
+      ]),
+    ).toBe(80);
+  });
+
+  it("só visitas com conformidade null também retorna null", () => {
+    expect(
+      calcularConformidadeCliente([
+        { conformidade: null },
+        { conformidade: null },
+      ]),
+    ).toBeNull();
+  });
+
+  it("arredonda a média para o inteiro mais próximo", () => {
+    // (89 + 92) / 2 = 90,5 → 91
+    expect(
+      calcularConformidadeCliente([
+        { conformidade: 89 },
+        { conformidade: 92 },
+      ]),
+    ).toBe(91);
+  });
+
+  it("uma única visita devolve a própria conformidade", () => {
+    expect(calcularConformidadeCliente([{ conformidade: 89 }])).toBe(89);
   });
 });

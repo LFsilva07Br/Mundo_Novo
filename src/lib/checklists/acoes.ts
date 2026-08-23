@@ -3,7 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient, getUsuarioAtual } from "@/lib/supabase/server";
-import { validarConclusaoVisita, validarDescricaoNc } from "./regras";
+import {
+  calcularConformidade,
+  calcularConformidadeCliente,
+  validarConclusaoVisita,
+  validarDescricaoNc,
+} from "./regras";
+import type { Resposta } from "./tipos";
 
 /**
  * Server Actions do editor de checklist versionado e da execução de visitas.
@@ -493,7 +499,7 @@ export async function concluirVisita(visitaId: string): Promise<ResultadoAcao> {
   const { data: visita, error: erroVisita } = await supabase
     .from("visitas")
     .select(
-      `id, status,
+      `id, status, cliente_id,
        checklist_versoes ( checklist_itens ( id, codigo, obrigatorio ) ),
        visita_respostas ( item_id )`,
     )
@@ -505,6 +511,7 @@ export async function concluirVisita(visitaId: string): Promise<ResultadoAcao> {
   }
 
   const linha = visita as unknown as {
+    cliente_id: string;
     checklist_versoes: {
       checklist_itens: { id: string; codigo: string; obrigatorio: boolean }[];
     } | null;
@@ -524,7 +531,45 @@ export async function concluirVisita(visitaId: string): Promise<ResultadoAcao> {
     return { ok: false, erro: `Erro ao concluir a visita: ${error.message}` };
   }
 
+  await atualizarConformidadeCliente(supabase, linha.cliente_id);
+
   revalidatePath(`/painel/visitas/${analise.data}`);
   revalidatePath("/painel/visitas");
   return { ok: true };
+}
+
+/**
+ * Conformidade viva: recalcula `clientes.conformidade` como a média
+ * arredondada das conformidades de todas as visitas concluídas do cliente.
+ * Sem visita com conformidade calculável, o valor do cliente não é alterado.
+ * Melhor esforço — uma falha aqui não desfaz a conclusão da visita.
+ */
+async function atualizarConformidadeCliente(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  clienteId: string,
+): Promise<void> {
+  const { data: visitas, error } = await supabase
+    .from("visitas")
+    .select("id, visita_respostas ( resposta )")
+    .eq("cliente_id", clienteId)
+    .neq("status", "em_andamento");
+  if (error || !visitas) return;
+
+  const linhas = visitas as unknown as {
+    visita_respostas: { resposta: Resposta }[];
+  }[];
+  const conformidade = calcularConformidadeCliente(
+    linhas.map((v) => ({
+      conformidade: calcularConformidade(v.visita_respostas),
+    })),
+  );
+  if (conformidade === null) return;
+
+  await supabase
+    .from("clientes")
+    .update({ conformidade })
+    .eq("id", clienteId);
+
+  revalidatePath(`/painel/clientes/${clienteId}`);
+  revalidatePath("/painel");
 }

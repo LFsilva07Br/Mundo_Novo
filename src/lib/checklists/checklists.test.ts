@@ -40,6 +40,16 @@ describe("consultas de visitas — modo demonstração", () => {
     expect(datas).toEqual([...datas].sort((a, b) => b.localeCompare(a)));
   });
 
+  it("listarVisitas filtrada por cliente devolve só as visitas dele", async () => {
+    const doCliente = await listarVisitas("alto-da-serra");
+    expect(doCliente.length).toBeGreaterThan(0);
+    for (const visita of doCliente) {
+      expect(visita.clienteNome).toBe("Fazenda Alto da Serra");
+    }
+
+    expect(await listarVisitas("cliente-sem-visitas")).toEqual([]);
+  });
+
   it("visita concluída traz a conformidade calculada; em andamento, não", async () => {
     const visitas = await listarVisitas();
     const concluida = visitas.find((v) => v.status === "concluida")!;
