@@ -87,6 +87,33 @@ const fases: Fase[] = [
     percentual: 40,
     observacao: "Em construção hoje, com agentes em paralelo",
   },
+  {
+    nome: "Fase 10 — Norma expandida (agro & rastreio)",
+    descricao:
+      "Aplicações de defensivos por talhão com checagem de treinamento do aplicador, lista de produtos proibidos RA, destinação de embalagens, balanço de volume certificado e pagamentos DS/DI.",
+    percentual: 10,
+    observacao: "Banco pronto; telas em construção com agentes",
+  },
+  {
+    nome: "Fase 11 — Compliance social",
+    descricao:
+      "Fichas de EPI e atas de treinamento assinadas, sistema avaliar-e-tratar (cap. 5.1), canal digital de queixas e plano de gestão anual com avaliação de risco.",
+    percentual: 10,
+    observacao: "Banco pronto; telas em construção",
+  },
+  {
+    nome: "Fase 12 — Comunicação & planejamento",
+    descricao:
+      "Notificações push no celular, cobrança por WhatsApp, planejamento anual de visitas (cobertura 100%), nota de prontidão para auditoria e evolução histórica da conformidade.",
+    percentual: 5,
+  },
+  {
+    nome: "Fase 13 — Confiança & dados",
+    descricao:
+      "Modo auditor externo (somente leitura), gestão de achados da certificadora, trilha de auditoria do sistema, relatório EUDR (polígonos), biblioteca multi-normas (4C/Orgânico) e exportação/backup completo.",
+    percentual: 10,
+    observacao: "Trilha de auditoria já gravando no banco",
+  },
 ];
 
 function BarraProgresso({ percentual }: { percentual: number }) {
