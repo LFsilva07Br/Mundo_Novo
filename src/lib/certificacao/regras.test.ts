@@ -5,6 +5,9 @@ import {
   contratoEscalonado,
   diasParado,
   ETAPAS_PROCESSO,
+  motivoRejeicaoValido,
+  MOTIVO_REJEICAO_MAXIMO,
+  MOTIVO_REJEICAO_MINIMO,
   movimentoValido,
   podeFecharCapa,
   proximaEtapa,
@@ -96,5 +99,25 @@ describe("ranking de gaps por categoria do item", () => {
       { categoria: "Gerência", quantidade: 2 },
       { categoria: "Rastreabilidade", quantidade: 0 },
     ]);
+  });
+});
+
+describe("motivoRejeicaoValido", () => {
+  it("aprovação não exige motivo", () => {
+    expect(motivoRejeicaoValido("aprovado", null)).toBe(true);
+    expect(motivoRejeicaoValido("aprovado", "")).toBe(true);
+  });
+
+  it("rejeição exige motivo curto, entre o mínimo e o máximo", () => {
+    expect(motivoRejeicaoValido("rejeitado", null)).toBe(false);
+    expect(motivoRejeicaoValido("rejeitado", "   ")).toBe(false);
+    expect(motivoRejeicaoValido("rejeitado", "a".repeat(MOTIVO_REJEICAO_MINIMO - 1))).toBe(false);
+    expect(motivoRejeicaoValido("rejeitado", "a".repeat(MOTIVO_REJEICAO_MINIMO))).toBe(true);
+    expect(motivoRejeicaoValido("rejeitado", "a".repeat(MOTIVO_REJEICAO_MAXIMO))).toBe(true);
+    expect(motivoRejeicaoValido("rejeitado", "a".repeat(MOTIVO_REJEICAO_MAXIMO + 1))).toBe(false);
+  });
+
+  it("espaços nas pontas não contam como motivo", () => {
+    expect(motivoRejeicaoValido("rejeitado", "   curto   ")).toBe(false);
   });
 });

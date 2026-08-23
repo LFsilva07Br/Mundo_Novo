@@ -48,10 +48,14 @@ export const EQUIPE_DEMO: MembroEquipe[] = [
 export type ContratoPendente = {
   id: string;
   cliente: string;
+  /** Cliente da carteira, quando o contrato é de um cadastro já existente. */
+  clienteId?: string;
   tipo: "Fazenda" | "Cadeia de Suprimentos";
   solicitadoPor: string;
   solicitadoEm: string; // ISO
   diasParado: number;
+  /** Campo livre — guarda o link do documento e o motivo de uma rejeição. */
+  observacao?: string;
 };
 
 export const CONTRATOS_PENDENTES_DEMO: ContratoPendente[] = [
@@ -70,5 +74,18 @@ export const CONTRATOS_PENDENTES_DEMO: ContratoPendente[] = [
     solicitadoPor: "Raiane Gomes Borges",
     solicitadoEm: "2026-07-10",
     diasParado: 43,
+  },
+  // Renovação de cliente já na carteira: aqui a tela consegue mostrar valor,
+  // vigência e escopo vindos do financeiro — decidir deixa de ser às cegas.
+  {
+    id: "2026-044",
+    cliente: "Fazenda Bernardes",
+    clienteId: "bernardes",
+    tipo: "Fazenda",
+    solicitadoPor: "Adriano Carvalho",
+    solicitadoEm: "2026-08-18",
+    diasParado: 5,
+    observacao:
+      "Renovação anual. Minuta assinada em https://arquivos.mundonovocafe.com.br/contratos/2026-044.pdf",
   },
 ];

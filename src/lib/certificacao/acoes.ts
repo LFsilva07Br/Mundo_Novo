@@ -6,8 +6,11 @@ import { exigirEscrita } from "@/lib/auditor/guarda";
 import { createClient, getUsuarioAtual } from "@/lib/supabase/server";
 import {
   ehEtapaValida,
+  motivoRejeicaoValido,
   movimentoValido,
   podeFecharCapa,
+  MOTIVO_REJEICAO_MAXIMO,
+  MOTIVO_REJEICAO_MINIMO,
   ROTULO_ETAPA,
   type EtapaProcesso,
 } from "./regras";
@@ -113,23 +116,56 @@ export async function moverEtapa(
 
 // ------------------------------------------------------------ contratos
 
+const EsquemaDecisao = z
+  .object({
+    contratoId: z.uuid(),
+    decisao: z.enum(["aprovado", "rejeitado"]),
+    motivo: z
+      .string()
+      .trim()
+      .max(
+        MOTIVO_REJEICAO_MAXIMO,
+        `O motivo deve ser curto — até ${MOTIVO_REJEICAO_MAXIMO} caracteres.`,
+      )
+      .optional(),
+  })
+  .refine((d) => motivoRejeicaoValido(d.decisao, d.motivo), {
+    path: ["motivo"],
+    error: `Rejeição exige um motivo curto (de ${MOTIVO_REJEICAO_MINIMO} a ${MOTIVO_REJEICAO_MAXIMO} caracteres) — é ele que volta para quem solicitou.`,
+  });
+
+/**
+ * Aprova ou rejeita um contrato em alçada.
+ *
+ * O terceiro parâmetro é opcional para não quebrar chamadas antigas
+ * (`decidirContrato(id, "aprovado")` segue valendo); na rejeição, porém,
+ * o motivo é exigido e gravado em `contratos.observacao`.
+ */
 export async function decidirContrato(
   contratoId: string,
   decisao: "aprovado" | "rejeitado",
+  motivo?: string,
 ): Promise<ResultadoAcao> {
   // Auditor externo é somente leitura — recusa antes de qualquer consulta.
   const bloqueio = await exigirEscrita();
   if (bloqueio) return bloqueio;
 
+  // Validação antes do banco: dado inválido não vira ida ao servidor.
+  const entrada = EsquemaDecisao.safeParse({ contratoId, decisao, motivo });
+  if (!entrada.success) {
+    const primeiro = entrada.error.issues[0];
+    const ehMotivo = primeiro?.path[0] === "motivo";
+    return {
+      ok: false,
+      erro:
+        ehMotivo && primeiro
+          ? primeiro.message
+          : "Dados inválidos para decidir o contrato.",
+    };
+  }
+
   const supabase = await createClient();
   if (!supabase) return { ok: false, erro: ERRO_DEMO };
-
-  const entrada = z
-    .object({ contratoId: z.uuid(), decisao: z.enum(["aprovado", "rejeitado"]) })
-    .safeParse({ contratoId, decisao });
-  if (!entrada.success) {
-    return { ok: false, erro: "Dados inválidos para decidir o contrato." };
-  }
 
   const usuario = await getUsuarioAtual();
   if (!usuario) {
@@ -155,6 +191,10 @@ export async function decidirContrato(
       status: entrada.data.decisao,
       decidido_por: usuario.id,
       decidido_em: new Date().toISOString(),
+      // O motivo da rejeição fica registrado junto da decisão.
+      ...(entrada.data.decisao === "rejeitado" && {
+        observacao: entrada.data.motivo,
+      }),
     })
     .eq("id", entrada.data.contratoId)
     .eq("status", "aguardando_alcada");

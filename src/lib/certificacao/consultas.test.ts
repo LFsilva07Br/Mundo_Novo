@@ -26,12 +26,14 @@ describe("consultas em modo demonstração", () => {
 
   it("lista os contratos aguardando alçada com dias parados", async () => {
     const contratos = await listarContratos();
-    expect(contratos).toHaveLength(2);
+    expect(contratos).toHaveLength(3);
     for (const contrato of contratos) {
       expect(contrato.status).toBe("aguardando_alcada");
-      expect(contrato.diasParado).toBeGreaterThan(10);
+      expect(contrato.diasParado).toBeGreaterThan(0);
       expect(contrato.decididoPor).toBeNull();
     }
+    // Dois deles já passaram do limite de 10 dias e escalonam à diretoria.
+    expect(contratos.filter((c) => c.diasParado > 10)).toHaveLength(2);
   });
 
   it("lista as CAPAs com as ações do plano", async () => {

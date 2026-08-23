@@ -94,3 +94,26 @@ export function calcularRankingGaps(
     .map(([categoria, quantidade]) => ({ categoria, quantidade }))
     .sort((a, b) => b.quantidade - a.quantidade);
 }
+
+// ------------------------------------------------------- rejeição de contrato
+
+/** Mínimo para o motivo dizer alguma coisa a quem solicitou o contrato. */
+export const MOTIVO_REJEICAO_MINIMO = 10;
+/** Máximo do motivo da rejeição — é um recado curto, não um laudo. */
+export const MOTIVO_REJEICAO_MAXIMO = 280;
+
+/**
+ * Rejeitar sem dizer por quê deixa quem solicitou sem saída: na rejeição o
+ * motivo é obrigatório (e curto). Na aprovação, é ignorado.
+ */
+export function motivoRejeicaoValido(
+  decisao: "aprovado" | "rejeitado",
+  motivo: string | null | undefined,
+): boolean {
+  if (decisao !== "rejeitado") return true;
+  const limpo = (motivo ?? "").trim();
+  return (
+    limpo.length >= MOTIVO_REJEICAO_MINIMO &&
+    limpo.length <= MOTIVO_REJEICAO_MAXIMO
+  );
+}
