@@ -71,21 +71,63 @@ function paraVersao(linha: LinhaVersao): VersaoChecklist {
   };
 }
 
+/** Resumo de um checklist cadastrado — para o seletor de normas. */
+export type ChecklistResumo = {
+  id: string;
+  nome: string;
+  norma: string;
+  versaoNorma: string | null;
+};
+
+/** Todos os checklists cadastrados (um por norma), na ordem de criação. */
+export async function listarChecklists(): Promise<ChecklistResumo[]> {
+  const supabase = await createClient();
+  if (!supabase) {
+    return [
+      {
+        id: CHECKLIST_DEMO.id,
+        nome: CHECKLIST_DEMO.nome,
+        norma: CHECKLIST_DEMO.norma,
+        versaoNorma: CHECKLIST_DEMO.versaoNorma,
+      },
+    ];
+  }
+
+  const { data, error } = await supabase
+    .from("checklists")
+    .select("id, nome, norma, versao_norma")
+    .order("criado_em");
+  if (error) throw new Error(`Erro ao listar checklists: ${error.message}`);
+
+  return data.map((linha) => ({
+    id: linha.id,
+    nome: linha.nome,
+    norma: linha.norma,
+    versaoNorma: linha.versao_norma,
+  }));
+}
+
 /**
- * Checklist em uso (o primeiro cadastrado), com a versão publicada e a
- * versão rascunho — quando existir uma em edição.
+ * Checklist em uso, com a versão publicada e a versão rascunho — quando
+ * existir uma em edição. Sem `checklistId`, devolve o primeiro cadastrado
+ * (comportamento original); com o id, devolve o checklist daquela norma.
  */
-export async function obterChecklistAtual(): Promise<ChecklistAtual | null> {
+export async function obterChecklistAtual(
+  checklistId?: string,
+): Promise<ChecklistAtual | null> {
   const supabase = await createClient();
   if (!supabase) return CHECKLIST_DEMO;
 
-  const { data, error } = await supabase
+  let consulta = supabase
     .from("checklists")
     .select(
       `id, nome, norma, versao_norma,
        checklist_versoes ( id, numero, status, publicada_em,
          checklist_itens ( ${SELECT_ITEM} ) )`,
-    )
+    );
+  if (checklistId) consulta = consulta.eq("id", checklistId);
+
+  const { data, error } = await consulta
     .order("criado_em")
     .limit(1)
     .maybeSingle();
