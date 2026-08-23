@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Área de trabalho de agentes (worktrees) — fora do lint do repo principal
+    ".claude/**",
   ]),
 ]);
 
