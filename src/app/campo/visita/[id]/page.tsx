@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { obterVisitaLocal, salvarVisitaLocal } from "@/lib/campo/banco-local";
+import { copiarArquivosSelecionados } from "@/lib/campo/anexar-fotos";
 import { capturarGps, redimensionarFoto } from "@/lib/campo/midia";
 import { obterOuBaixarPacote } from "@/lib/campo/pacote";
 import {
@@ -99,9 +100,10 @@ export default function PaginaVisita({
 
   async function anexarFotos(item: ItemVersao, arquivos: FileList | null) {
     if (!arquivos?.length) return;
+    const selecionados = copiarArquivosSelecionados(arquivos);
     const gps = await capturarGps();
     const novas: FotoLocal[] = [];
-    for (const arquivo of Array.from(arquivos)) {
+    for (const arquivo of selecionados) {
       try {
         novas.push({
           itemId: item.id,

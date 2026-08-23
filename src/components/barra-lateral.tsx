@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -7,6 +8,7 @@ import {
   BookOpen,
   Coins,
   Mail,
+  Menu,
   Building2,
   CalendarClock,
   CalendarRange,
@@ -31,6 +33,12 @@ import {
   Wallet,
   Workflow,
 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 type ItemNavegacao = {
@@ -121,11 +129,20 @@ function GrupoNavegacao({
   );
 }
 
-export function BarraLateral({ emailUsuario }: { emailUsuario: string | null }) {
-  const pathname = usePathname();
-
+function ConteudoBarra({
+  emailUsuario,
+  pathname,
+  aoNavegar,
+}: {
+  emailUsuario: string | null;
+  pathname: string;
+  aoNavegar?: () => void;
+}) {
   return (
-    <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col overflow-y-auto bg-sidebar px-3 pb-4 lg:flex">
+    <div
+      className="flex h-full flex-col overflow-y-auto bg-sidebar px-3 pb-4"
+      onClick={aoNavegar}
+    >
       <div className="flex items-center gap-3 px-3 py-5">
         <div className="flex size-9 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-lg">
           ☕
@@ -164,6 +181,58 @@ export function BarraLateral({ emailUsuario }: { emailUsuario: string | null }) 
           {emailUsuario ?? "Visitante (demonstração)"}
         </p>
       </div>
+    </div>
+  );
+}
+
+export function BarraLateral({ emailUsuario }: { emailUsuario: string | null }) {
+  const pathname = usePathname();
+
+  return (
+    <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 lg:block">
+      <ConteudoBarra emailUsuario={emailUsuario} pathname={pathname} />
     </aside>
+  );
+}
+
+/**
+ * Navegação para telas estreitas (notebook com janela reduzida, tablet).
+ * Sem isto, abaixo de `lg` o usuário ficava sem nenhum acesso ao menu.
+ */
+export function BarraLateralMovel({
+  emailUsuario,
+}: {
+  emailUsuario: string | null;
+}) {
+  const pathname = usePathname();
+  const [aberta, setAberta] = useState(false);
+
+  return (
+    <div className="flex items-center gap-3 border-b bg-sidebar px-4 py-3 lg:hidden">
+      <Sheet open={aberta} onOpenChange={setAberta}>
+        <SheetTrigger
+          render={
+            <button
+              type="button"
+              aria-label="Abrir menu de navegação"
+              className="rounded-xl p-2 text-sidebar-foreground hover:bg-sidebar-accent"
+            >
+              <Menu className="size-5" />
+            </button>
+          }
+        />
+        <SheetContent side="left" className="w-72 border-0 p-0">
+          <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
+          <ConteudoBarra
+            emailUsuario={emailUsuario}
+            pathname={pathname}
+            aoNavegar={() => setAberta(false)}
+          />
+        </SheetContent>
+      </Sheet>
+      <span className="flex items-center gap-2 text-sm font-extrabold text-white">
+        <span className="text-lg">☕</span> Mundo Novo
+      </span>
+    </div>
   );
 }
