@@ -14,9 +14,12 @@ import {
   FileSignature,
   Landmark,
   LayoutDashboard,
+  Leaf,
   ListChecks,
   Map,
+  SearchCheck,
   ShieldCheck,
+  SprayCan,
   Users,
   UsersRound,
   Workflow,
@@ -42,6 +45,9 @@ const visaoGeral: ItemNavegacao[] = [
   { rotulo: "CAPAs", href: "/painel/capas", icone: ShieldCheck, disponivel: true },
   { rotulo: "Social & Colaboradores", href: "/painel/social", icone: UsersRound, disponivel: true },
   { rotulo: "Comercialização", href: "/painel/comercializacao", icone: Coins, disponivel: true },
+  { rotulo: "Agroquímicos", href: "/painel/agro", icone: SprayCan, disponivel: true },
+  { rotulo: "Auditoria Externa", href: "/painel/auditoria-externa", icone: SearchCheck, disponivel: true },
+  { rotulo: "Sustentabilidade (DS/DI)", href: "/painel/sustentabilidade", icone: Leaf, disponivel: true },
 ];
 
 const configuracao: ItemNavegacao[] = [

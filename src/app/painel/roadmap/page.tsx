@@ -83,35 +83,35 @@ const fases: Fase[] = [
     nome: "Fase 9 — Expansões (portal, comercialização, mapas)",
     descricao:
       "Portal do produtor, módulo de comercialização com rastreabilidade por lote, mapas das fazendas (KML/CAR) e suíte de testes ponta a ponta.",
-    percentual: 70,
-    observacao: "Em construção hoje, com agentes em paralelo",
+    percentual: 90,
+    observacao: "Falta a suíte de testes ponta a ponta (em execução)",
   },
   {
     nome: "Fase 10 — Norma expandida (agro & rastreio)",
     descricao:
       "Aplicações de defensivos por talhão com checagem de treinamento do aplicador, lista de produtos proibidos RA, destinação de embalagens, balanço de volume certificado e pagamentos DS/DI.",
-    percentual: 10,
-    observacao: "Banco pronto; telas em construção com agentes",
+    percentual: 100,
   },
   {
     nome: "Fase 11 — Compliance social",
     descricao:
       "Fichas de EPI e atas de treinamento assinadas, sistema avaliar-e-tratar (cap. 5.1), canal digital de queixas e plano de gestão anual com avaliação de risco.",
-    percentual: 10,
-    observacao: "Banco pronto; telas em construção",
+    percentual: 50,
+    observacao: "EPIs e atas entregues; avaliar-e-tratar e queixas em construção",
   },
   {
     nome: "Fase 12 — Comunicação & planejamento",
     descricao:
       "Notificações push no celular, cobrança por WhatsApp, planejamento anual de visitas (cobertura 100%), nota de prontidão para auditoria e evolução histórica da conformidade.",
-    percentual: 5,
+    percentual: 40,
+    observacao: "Prontidão, balanço de volume e evolução histórica entregues",
   },
   {
     nome: "Fase 13 — Confiança & dados",
     descricao:
       "Modo auditor externo (somente leitura), gestão de achados da certificadora, trilha de auditoria do sistema, relatório EUDR (polígonos), biblioteca multi-normas (4C/Orgânico) e exportação/backup completo.",
-    percentual: 10,
-    observacao: "Trilha de auditoria já gravando no banco",
+    percentual: 35,
+    observacao: "Achados externos e DS/DI entregues; trilha gravando no banco",
   },
 ];
 
