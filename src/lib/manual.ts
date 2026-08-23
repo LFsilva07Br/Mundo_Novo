@@ -73,8 +73,8 @@ export const TELAS_MANUAL: TelaManual[] = [
       "Fila de contratos aguardando aprovação — apenas usuários com alçada veem os botões.",
     passos: [
       "No menu lateral, clique em Contratos.",
-      "Use o seletor “Ver como” para simular a visão de cada pessoa da equipe.",
-      "Com alçada: os botões Aprovar e Rejeitar aparecem. Sem alçada: a tela fica somente leitura.",
+      "Quem decide é o usuário conectado: com alçada, os botões Aprovar e Rejeitar aparecem; sem alçada, a tela fica somente leitura.",
+      "Toda decisão registra quem aprovou/rejeitou e quando, no cartão “Decididos”.",
       "Contratos parados há mais de 10 dias exibem o aviso de escalonamento automático.",
     ],
   },
@@ -129,8 +129,8 @@ export const TELAS_MANUAL: TelaManual[] = [
       "Itens da norma RA 1.4 com as exigências configuráveis que valem no app de campo.",
     passos: [
       "No menu lateral, clique em Checklists.",
-      "Clique em qualquer item da lista para ver suas propriedades no painel à direita.",
-      "Cada item define: obrigatoriedade, mínimo de fotos em NC (com GPS automático) e mínimo de caracteres da descrição.",
+      "Clique em um item para ver (ou editar, no rascunho) suas propriedades no painel à direita.",
+      "Para alterar o checklist: “Criar rascunho” → edite/adicione/remova itens → “Publicar versão”.",
     ],
     dicas: [
       "Alterações são versionadas — só chegam ao app do consultor após publicar a nova versão.",
@@ -149,6 +149,19 @@ export const TELAS_MANUAL: TelaManual[] = [
     ],
     dicas: [
       "Todo alerta persiste até a pendência ser resolvida — não some sozinho.",
+    ],
+  },
+  {
+    id: "agenda",
+    titulo: "Agenda",
+    rota: "/painel/agenda",
+    resumo:
+      "Tarefas geradas pelos dois motores de automação, com etiqueta de origem.",
+    passos: [
+      "No menu lateral, clique em Agenda.",
+      "⏱ = tarefa criada por proximidade de data (vencimentos); ⚡ = criada por um evento (ex.: cliente entrou na certificadora).",
+      "Clique em Concluir quando a pendência for resolvida — até lá o alerta persiste.",
+      "“Rodar motor agora” varre os vencimentos sob demanda; automaticamente ele roda todo dia às 06:00.",
     ],
   },
   {
@@ -174,7 +187,7 @@ export const TELAS_MANUAL: TelaManual[] = [
       "No menu lateral, clique em Grupos.",
       "Cada cartão mostra quantos clientes o grupo tem e a conformidade média.",
       "Grupos com a etiqueta “Grupo externo” são administrados por terceiros — a Mundo Novo executa a consultoria.",
-      "Use o link “Ver todos os clientes” para ir direto à lista completa.",
+      "Use “Novo grupo” para cadastrar e o lápis de cada cartão para editar.",
     ],
   },
   {
@@ -187,10 +200,26 @@ export const TELAS_MANUAL: TelaManual[] = [
       "No menu lateral, clique em Clientes.",
       "Cada linha mostra o tipo (Fazenda ou Cadeia de Suprimentos), o grupo, as certificações e o vencimento da certificação principal.",
       "As cores do vencimento seguem o padrão do sistema: vermelho = crítico (30 dias ou menos), laranja = atenção (até 120 dias).",
-      "Clique em um cliente para abrir a ficha completa, com contatos por área e imóveis rurais.",
+      "Use a busca e os filtros (Fazenda, Cadeia, Sem grupo) para encontrar rapidamente.",
+      "“Novo cliente” cadastra um cliente — ele nasce na fase de Implantação, como manda a regra.",
+      "Clique em um cliente para abrir a ficha completa: edição dos dados, contatos por área e o registro de contatos (ligações, e-mails, reuniões e visitas).",
     ],
     dicas: [
       "Na ficha do cliente, a tabela de imóveis mostra CAR, matrícula e quais imóveis têm captação de água.",
+    ],
+  },
+  {
+    id: "visitas",
+    titulo: "Visitas & Auditorias",
+    rota: "/painel/visitas",
+    resumo:
+      "Execução do checklist da versão publicada, no campo ou no escritório.",
+    passos: [
+      "Clique em “Nova visita/auditoria”, escolha o cliente, o título e a origem (Campo ou Escritório).",
+      "Responda cada item: Conforme, Não conforme ou N.A.",
+      "Ao marcar Não conforme, descreva a evidência — o contador mostra o mínimo de caracteres exigido pelo item.",
+      "Cada NC abre um plano de ação (CAPA) automaticamente.",
+      "Ao responder os itens obrigatórios, clique em “Concluir visita” para ver a conformidade final.",
     ],
   },
   {

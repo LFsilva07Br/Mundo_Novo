@@ -89,6 +89,15 @@ As fases seguintes adicionam migrations incrementais (grupos, clientes, imóveis
 - **Documentação**: `docs/funcional.md` e `docs/tecnica.md` são atualizados no mesmo commit de cada funcionalidade e publicados na rota `/docs`.
 - **Manual do usuário**: `src/lib/manual.ts` descreve cada tela (rota, passos, dicas); `scripts/gerar-manual.mjs` sobe o build e fotografa cada rota com Playwright em `public/manual/`. O job `manual` do CI regenera os prints a cada push na `main` e commita as mudanças (`[skip ci]`), que a Vercel publica — o manual em `/manual` sempre reflete o sistema no ar. Toda tela nova ganha sua entrada em `manual.ts` no mesmo commit.
 
+## Módulos operacionais (madrugada de 23/08)
+
+- **Migrations 0004–0008**: social completo (trabalhadores, moradias, treinamentos com `vence_em`, exames), operações (workflow com 6 etapas + movimentos, contratos com alçada, checklists versionados, visitas/respostas, CAPAs + ações, tarefas com unicidade por regra) e log do robô. **Gatilho no banco**: inserir resposta `nao_conforme` cria a CAPA automaticamente (trigger `nc_gera_capa`).
+- **Motor por data** (`/api/gatilhos` + cron Vercel 06:00): varre certificações, documentos de imóvel, captações, treinamentos e CAPAs; materializa tarefas idempotentes (`unique regra+cliente+vence_em`). Régua em `src/lib/gatilhos.ts`.
+- **Motor por evento**: mover cliente para `na_certificadora` gera tarefa de notificação; decisão de contrato validada server-side contra `alcada_aprovacao` do perfil logado.
+- **Robô ALAICE** (`robo/verificar_alaice.py` + GitHub Action diária 06:00): consulta a fonte, carimba `verificada_pelo_robo_em` e registra em `execucoes_robo`; sem acesso ao site → `verificacao_assistida`.
+- **CRUDs**: carteira (grupos/clientes/contatos/registros de contato), imóveis/talhões/safras/documentos/captações, social, checklists versionados (rascunho→publicação), visitas com respostas e conformidade, CAPAs (ações, fechamento condicionado), perfis + convite por Admin API (service key só no servidor).
+- Padrão das camadas: `consultas.ts` (leitura, fallback demo p/ testes) + `acoes.ts` (Server Actions com zod) por módulo em `src/lib/<módulo>/`.
+
 ## Infraestrutura em produção
 
 - **Supabase**: projeto `mundo-novo` (ref `qyegfrctafjghgprnihl`), região São Paulo (`sa-east-1`). Migrations 0001–0003 aplicadas; carteira real carregada.
