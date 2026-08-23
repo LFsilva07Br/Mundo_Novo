@@ -85,10 +85,15 @@ export function FormularioEvidenciaProdutor({ capaId, acoes, modoDemo }: Props) 
 
       {pendentes.length > 0 ? (
         <div className="space-y-1.5">
-          <Label htmlFor={`acao-${capaId}`} className="text-sm">
+          <Label htmlFor={`acao-${capaId}`} className="text-base">
             Qual ação essa foto comprova? (opcional)
           </Label>
-          <SelectNativo id={`acao-${capaId}`} name="acao" defaultValue="">
+          <SelectNativo
+            id={`acao-${capaId}`}
+            name="acao"
+            defaultValue=""
+            className="h-11 text-base md:text-base"
+          >
             <option value="">Pendência em geral</option>
             {pendentes.map((acao) => (
               <option key={acao.id} value={acao.id}>
@@ -99,21 +104,32 @@ export function FormularioEvidenciaProdutor({ capaId, acoes, modoDemo }: Props) 
         </div>
       ) : null}
 
-      <div className="space-y-1.5">
-        <Label htmlFor={`arquivo-${capaId}`} className="text-sm">
-          Foto (JPEG, PNG ou WebP · até {TAMANHO_MAXIMO_MB} MB)
+      {/* O produtor não precisa saber o que é JPEG nem quantos MB tem a
+          foto — precisa saber o que apontar a câmera para fotografar. */}
+      <div className="space-y-2">
+        <Label htmlFor={`arquivo-${capaId}`} className="text-base font-bold">
+          📷 Tirar foto agora
         </Label>
+        <p className="text-base leading-relaxed text-muted-foreground">
+          Fotografe o local depois de arrumado, de longe o suficiente para dar
+          para reconhecer onde é. Se der, tire com boa luz e sem ninguém na
+          frente. Uma foto por vez.
+        </p>
         <Input
           id={`arquivo-${capaId}`}
           name="arquivo"
           type="file"
           accept={TIPOS_DE_IMAGEM_PERMITIDOS.join(",")}
           capture="environment"
+          className="h-12 py-2.5 text-base file:h-8 file:text-base md:text-base"
         />
+        <p className="text-sm text-muted-foreground">
+          Serve foto tirada por qualquer celular, até {TAMANHO_MAXIMO_MB} MB.
+        </p>
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor={`descricao-${capaId}`} className="text-sm">
+        <Label htmlFor={`descricao-${capaId}`} className="text-base">
           Alguma observação? (opcional)
         </Label>
         <Input
@@ -121,6 +137,7 @@ export function FormularioEvidenciaProdutor({ capaId, acoes, modoDemo }: Props) 
           name="descricao"
           maxLength={500}
           placeholder="Ex.: placa instalada na porta do depósito"
+          className="h-11 text-base md:text-base"
         />
       </div>
 
@@ -130,7 +147,12 @@ export function FormularioEvidenciaProdutor({ capaId, acoes, modoDemo }: Props) 
         </p>
       ) : null}
 
-      <Button type="submit" disabled={enviando} className="gap-2 text-base">
+      <Button
+        type="submit"
+        size="lg"
+        disabled={enviando}
+        className="h-12 w-full gap-2 px-5 text-base sm:w-auto"
+      >
         <Camera className="size-5" />
         {enviando ? "Enviando…" : "Enviar para verificação"}
       </Button>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { LogOut, Sprout } from "lucide-react";
 import { sair } from "@/app/login/actions";
+import { RodapeAjuda } from "@/components/rodape-ajuda";
 import { Toaster } from "@/components/ui/sonner";
 import { perfilPortal } from "@/lib/portal/sessao";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
@@ -46,9 +47,9 @@ export default async function LayoutPortal({ children }: LayoutProps<"/portal">)
             <form action={sair}>
               <button
                 type="submit"
-                className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-primary-foreground/80 transition-colors hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                className="flex min-h-11 min-w-11 items-center gap-2 rounded-xl px-3 py-2 text-base font-bold text-primary-foreground/80 transition-colors hover:bg-primary-foreground/10 hover:text-primary-foreground"
               >
-                <LogOut className="size-4" />
+                <LogOut className="size-5" />
                 Sair
               </button>
             </form>
@@ -67,6 +68,12 @@ export default async function LayoutPortal({ children }: LayoutProps<"/portal">)
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
         {children}
       </main>
+
+      {/* Ajuda em TODA página do portal: "travei, e agora?" resolvido sem
+          o produtor precisar procurar telefone em outro lugar. */}
+      <footer className="mx-auto w-full max-w-4xl px-4 pb-8 sm:px-6">
+        <RodapeAjuda />
+      </footer>
       <Toaster />
     </div>
   );

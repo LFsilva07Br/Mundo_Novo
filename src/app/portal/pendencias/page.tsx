@@ -1,37 +1,16 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { CheckCircle2, Circle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { BadgeVencimento } from "@/components/badge-vencimento";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import type { SeveridadeNc, StatusCapa } from "@/lib/certificacao/consultas";
+import { AlertTriangle, CheckCircle2, Circle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { capasDoProdutor } from "@/lib/portal/consultas";
 import { perfilPortal } from "@/lib/portal/sessao";
+import { traduzirJargao, urgenciaDaPendencia } from "@/lib/portal/traducao";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { cn } from "@/lib/utils";
 import { FormularioEvidenciaProdutor } from "./formulario-evidencia-produtor";
 
 export const metadata: Metadata = {
   title: "Pendências",
-};
-
-const ROTULO_SEVERIDADE: Record<SeveridadeNc, { texto: string; classe: string }> =
-  {
-    menor: { texto: "Atenção", classe: "bg-secondary text-secondary-foreground" },
-    maior: { texto: "Importante", classe: "bg-warning/10 text-warning" },
-    critica: { texto: "Urgente", classe: "bg-destructive/10 text-destructive" },
-  };
-
-const ROTULO_STATUS: Record<StatusCapa, string> = {
-  aberta: "Aguardando início",
-  em_correcao: "Em correção",
-  aguardando_evidencia: "Aguardando suas fotos",
-  fechada: "Resolvida",
 };
 
 export default async function PaginaPendencias() {
@@ -47,7 +26,7 @@ export default async function PaginaPendencias() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-extrabold tracking-tight">Pendências</h2>
-        <p className="mt-1 text-base text-muted-foreground">
+        <p className="mt-1 text-base leading-relaxed text-muted-foreground">
           O que precisa ser ajustado na fazenda para manter o certificado.
           Envie fotos do que já foi feito — o consultor confere o resto.
         </p>
@@ -59,27 +38,42 @@ export default async function PaginaPendencias() {
         </p>
       ) : (
         abertas.map((capa) => {
-          const severidade = ROTULO_SEVERIDADE[capa.severidade];
+          // UMA etiqueta só. Antes o cartão trazia severidade, status e
+          // vencimento lado a lado ("Importante" + "Em correção" +
+          // "Crítico"), e os três diziam coisas diferentes.
+          const urgencia = urgenciaDaPendencia(capa);
           return (
             <Card key={capa.id}>
               <CardHeader>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className={cn(
-                      "rounded-lg px-2.5 py-1 text-xs font-bold",
-                      severidade.classe,
-                    )}
-                  >
-                    {severidade.texto}
-                  </span>
-                  <Badge variant="outline">{ROTULO_STATUS[capa.status]}</Badge>
-                  {capa.prazo ? <BadgeVencimento venceEm={capa.prazo} /> : null}
-                </div>
+                <span
+                  className={cn(
+                    "inline-flex w-fit rounded-lg px-3 py-1.5 text-sm font-extrabold",
+                    urgencia.classe,
+                  )}
+                >
+                  {urgencia.rotulo}
+                </span>
                 <CardTitle className="text-lg leading-snug">
-                  {capa.descricao}
+                  {traduzirJargao(capa.descricao)}
                 </CardTitle>
+                <p className="text-base leading-relaxed text-muted-foreground">
+                  {urgencia.situacao}
+                </p>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* A consequência é o que faltava: sem ela o produtor não
+                    sabe se isso é "um lembrete" ou "perco o certificado". */}
+                <p className="flex items-start gap-2.5 rounded-xl border border-warning/30 bg-warning/10 p-4 text-base leading-relaxed">
+                  <AlertTriangle
+                    className="mt-0.5 size-5 shrink-0 text-warning"
+                    aria-hidden="true"
+                  />
+                  <span>
+                    <strong className="font-extrabold">O que acontece se ficar assim: </strong>
+                    {urgencia.consequencia}
+                  </span>
+                </p>
+
                 {capa.acoes.length > 0 ? (
                   <div className="space-y-2">
                     <p className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
@@ -102,7 +96,7 @@ export default async function PaginaPendencias() {
                                 "text-muted-foreground line-through",
                             )}
                           >
-                            {acao.descricao}
+                            {traduzirJargao(acao.descricao)}
                           </span>
                         </li>
                       ))}
@@ -130,7 +124,7 @@ export default async function PaginaPendencias() {
               className="flex items-start gap-2.5 rounded-xl border p-4 text-base text-muted-foreground"
             >
               <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-primary" />
-              {capa.descricao}
+              {traduzirJargao(capa.descricao)}
             </p>
           ))}
         </div>

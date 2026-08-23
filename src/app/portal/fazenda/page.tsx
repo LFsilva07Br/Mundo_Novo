@@ -22,6 +22,7 @@ import {
 } from "@/lib/carteira/imoveis-consultas";
 import { proximaVisitaAgendada } from "@/lib/portal/consultas";
 import { perfilPortal } from "@/lib/portal/sessao";
+import { traduzirJargao } from "@/lib/portal/traducao";
 import { formatarArea, formatarData } from "@/lib/vencimentos";
 
 export const metadata: Metadata = {
@@ -42,9 +43,13 @@ export default async function PaginaMinhaFazenda() {
   const areas = [
     { rotulo: "área total", valor: somar(imoveis.map((i) => i.areaTotalHa)) },
     { rotulo: "área de café", valor: somar(imoveis.map((i) => i.areaCafeHa)) },
-    { rotulo: "área de APP", valor: somar(imoveis.map((i) => i.areaAppHa)) },
     {
-      rotulo: "reserva legal",
+      // Jargão traduzido no padrão do projeto: frase humana (termo técnico).
+      rotulo: traduzirJargao("área de APP"),
+      valor: somar(imoveis.map((i) => i.areaAppHa)),
+    },
+    {
+      rotulo: "mata que precisa ficar em pé (reserva legal)",
       valor: somar(imoveis.map((i) => i.areaReservaHa)),
     },
   ];
@@ -110,36 +115,73 @@ export default async function PaginaMinhaFazenda() {
             Resumo dos talhões cadastrados, com área e variedade.
           </CardDescription>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
+        <CardContent>
           {panorama.talhoes.length ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Talhão</TableHead>
-                  <TableHead>Imóvel</TableHead>
-                  <TableHead className="text-right">Área</TableHead>
-                  <TableHead>Variedade</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* No celular a tabela rolava para o lado e cortava o nome do
+                  imóvel sem aviso. Aqui cada talhão vira um cartão inteiro. */}
+              <ul className="space-y-3 md:hidden">
                 {panorama.talhoes.map((talhao) => (
-                  <TableRow key={talhao.id}>
-                    <TableCell className="text-base font-semibold">
-                      {talhao.nome}
-                    </TableCell>
-                    <TableCell className="max-w-44 truncate text-sm">
-                      {talhao.imovelNome}
-                    </TableCell>
-                    <TableCell className="text-right text-sm">
-                      {formatarArea(talhao.areaHa)}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {talhao.variedade ?? "—"}
-                    </TableCell>
-                  </TableRow>
+                  <li
+                    key={talhao.id}
+                    className="rounded-xl border p-4 text-base leading-relaxed"
+                  >
+                    <p className="text-lg font-extrabold">{talhao.nome}</p>
+                    <dl className="mt-2 space-y-1">
+                      <div className="flex flex-wrap gap-x-2">
+                        <dt className="font-semibold text-muted-foreground">
+                          Imóvel:
+                        </dt>
+                        <dd>{talhao.imovelNome}</dd>
+                      </div>
+                      <div className="flex flex-wrap gap-x-2">
+                        <dt className="font-semibold text-muted-foreground">
+                          Área:
+                        </dt>
+                        <dd>{formatarArea(talhao.areaHa)}</dd>
+                      </div>
+                      <div className="flex flex-wrap gap-x-2">
+                        <dt className="font-semibold text-muted-foreground">
+                          Variedade:
+                        </dt>
+                        <dd>{talhao.variedade ?? "não informada"}</dd>
+                      </div>
+                    </dl>
+                  </li>
                 ))}
-              </TableBody>
-            </Table>
+              </ul>
+
+              <div className="hidden overflow-x-auto md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Talhão</TableHead>
+                      <TableHead>Imóvel</TableHead>
+                      <TableHead className="text-right">Área</TableHead>
+                      <TableHead>Variedade</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {panorama.talhoes.map((talhao) => (
+                      <TableRow key={talhao.id}>
+                        <TableCell className="text-base font-semibold">
+                          {talhao.nome}
+                        </TableCell>
+                        <TableCell className="text-base">
+                          {talhao.imovelNome}
+                        </TableCell>
+                        <TableCell className="text-right text-base">
+                          {formatarArea(talhao.areaHa)}
+                        </TableCell>
+                        <TableCell className="text-base">
+                          {talhao.variedade ?? "não informada"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           ) : (
             <p className="text-base text-muted-foreground">
               Os talhões da sua fazenda aparecerão aqui assim que forem

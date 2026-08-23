@@ -61,7 +61,7 @@ export default async function PaginaRelatorios() {
           <CardContent>
             <a
               href={relatorio.href}
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-base font-bold text-primary-foreground transition-opacity hover:opacity-90"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 text-base font-bold text-primary-foreground transition-opacity hover:opacity-90"
             >
               <Download className="size-5" />
               Baixar PDF

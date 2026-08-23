@@ -1,62 +1,33 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Award, CheckCircle2, ClipboardList } from "lucide-react";
+import { Award, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { BadgeVencimento } from "@/components/badge-vencimento";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { obterCliente } from "@/lib/carteira/consultas";
 import { ROTULO_NORMA } from "@/lib/carteira/tipos";
 import { capasDoProdutor } from "@/lib/portal/consultas";
 import { perfilPortal } from "@/lib/portal/sessao";
+import { situacaoDaFazenda } from "@/lib/portal/traducao";
 import { diasAte, statusVencimento } from "@/lib/vencimentos";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Meu certificado",
 };
 
-/** Próximos passos em linguagem simples, a partir do vencimento e das pendências. */
-function proximosPassos(
-  venceEm: string | undefined,
-  pendencias: number,
-): string[] {
-  const passos: string[] = [];
+const TOM_FAIXA = {
+  ok: "border-primary/30 bg-primary/10",
+  atencao: "border-warning/40 bg-warning/10",
+  problema: "border-destructive/40 bg-destructive/10",
+} as const;
 
-  if (venceEm) {
-    const data = new Date(`${venceEm}T12:00:00`);
-    const status = statusVencimento(data);
-    if (status === "vencido") {
-      passos.push(
-        "Seu certificado está vencido. A equipe Mundo Novo já está cuidando da renovação — fique atento aos contatos do seu consultor.",
-      );
-    } else if (status !== "ok") {
-      passos.push(
-        `Seu certificado vence em ${diasAte(data)} dias. A equipe Mundo Novo acompanha a renovação com você — nada de susto.`,
-      );
-    }
-  }
-
-  if (pendencias > 0) {
-    passos.push(
-      pendencias === 1
-        ? "Você tem 1 pendência para resolver na fazenda. Veja o que fazer na aba Pendências."
-        : `Você tem ${pendencias} pendências para resolver na fazenda. Veja o que fazer na aba Pendências.`,
-    );
-  }
-
-  if (passos.length === 0) {
-    passos.push(
-      "Tudo em dia por aqui! Continue guardando os registros da fazenda e recebendo as visitas do consultor.",
-    );
-  }
-  return passos;
-}
+const TOM_BOTAO = {
+  ok: "bg-primary text-primary-foreground",
+  atencao: "bg-warning text-white",
+  problema: "bg-destructive text-white",
+} as const;
 
 export default async function PaginaMeuCertificado() {
   const perfil = await perfilPortal();
@@ -67,33 +38,63 @@ export default async function PaginaMeuCertificado() {
   const pendenciasAbertas = capas.filter((c) => c.status !== "fechada").length;
   const certificacaoPrincipal =
     cliente?.certificacoes.find((c) => c.principal) ?? cliente?.certificacoes[0];
-  const passos = proximosPassos(
-    certificacaoPrincipal?.venceEm,
+
+  const vencimento = certificacaoPrincipal?.venceEm
+    ? new Date(`${certificacaoPrincipal.venceEm}T12:00:00`)
+    : null;
+
+  // Uma resposta só para "está tudo certo?". Antes o topo mostrava
+  // "88% CONFORMIDADE" ao lado de "Vencido" — dois recados opostos.
+  const situacao = situacaoDaFazenda({
+    conformidade: cliente?.conformidade,
+    certificadoVencido: vencimento
+      ? statusVencimento(vencimento) === "vencido"
+      : false,
+    diasParaVencer: vencimento ? diasAte(vencimento) : null,
     pendenciasAbertas,
-  );
+  });
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-extrabold tracking-tight">
-            Meu certificado
-          </h2>
-          <p className="mt-1 text-base text-muted-foreground">
-            Aqui você acompanha a situação das certificações da sua fazenda.
-          </p>
-        </div>
-        {typeof cliente?.conformidade === "number" ? (
-          <div className="rounded-2xl bg-secondary px-5 py-3 text-center">
-            <p className="text-2xl font-extrabold text-secondary-foreground">
-              {cliente.conformidade}%
-            </p>
-            <p className="text-xs font-bold uppercase text-secondary-foreground/70">
-              conformidade
-            </p>
-          </div>
-        ) : null}
+      <div>
+        <h2 className="text-2xl font-extrabold tracking-tight">
+          Meu certificado
+        </h2>
+        <p className="mt-1 text-base text-muted-foreground">
+          Aqui você acompanha a situação das certificações da sua fazenda.
+        </p>
       </div>
+
+      <section
+        aria-labelledby="faixa-situacao"
+        className={cn("rounded-2xl border p-5 sm:p-6", TOM_FAIXA[situacao.tom])}
+      >
+        <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+          Está tudo certo com a minha fazenda?
+        </p>
+        <h3
+          id="faixa-situacao"
+          className="mt-2 text-2xl font-extrabold leading-tight sm:text-3xl"
+        >
+          {situacao.titulo}
+        </h3>
+        <p className="mt-2 text-base leading-relaxed">{situacao.explicacao}</p>
+        {situacao.conformidadeEmPalavras ? (
+          <p className="mt-3 rounded-xl bg-background/60 p-3 text-base font-semibold">
+            {situacao.conformidadeEmPalavras}
+          </p>
+        ) : null}
+        <Link
+          href={situacao.acao.href}
+          className={cn(
+            "mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl px-5 text-base font-bold transition-opacity hover:opacity-90",
+            TOM_BOTAO[situacao.tom],
+          )}
+        >
+          {situacao.acao.rotulo}
+          <ArrowRight className="size-5" />
+        </Link>
+      </section>
 
       {cliente?.certificacoes.length ? (
         <div className="space-y-4">
@@ -131,36 +132,13 @@ export default async function PaginaMeuCertificado() {
         </p>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <CheckCircle2 className="size-5 text-primary" />
-            Próximos passos
-          </CardTitle>
-          <CardDescription className="text-sm">
-            O que precisa da sua atenção agora, sem complicação.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {passos.map((passo) => (
-            <p
-              key={passo}
-              className="rounded-xl bg-secondary/60 p-4 text-base leading-relaxed"
-            >
-              {passo}
-            </p>
-          ))}
-          {pendenciasAbertas > 0 ? (
-            <Link
-              href="/portal/pendencias"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-base font-bold text-primary-foreground transition-opacity hover:opacity-90"
-            >
-              <ClipboardList className="size-5" />
-              Ver minhas pendências
-            </Link>
-          ) : null}
-        </CardContent>
-      </Card>
+      {pendenciasAbertas === 0 ? (
+        <p className="flex items-start gap-2.5 rounded-2xl border p-5 text-base leading-relaxed text-muted-foreground">
+          <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-primary" />
+          Nenhuma pendência aberta. Continue guardando os registros da fazenda
+          e recebendo as visitas do consultor.
+        </p>
+      ) : null}
     </div>
   );
 }

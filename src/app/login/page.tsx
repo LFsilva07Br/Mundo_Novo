@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { RodapeAjuda } from "@/components/rodape-ajuda";
 import { FormularioLogin } from "./formulario-login";
 
 export const metadata: Metadata = {
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
 export default function PaginaLogin() {
   return (
     <main className="flex flex-1 items-center justify-center bg-sidebar p-6">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl border border-white/20 bg-white/10 text-3xl">
             ☕
@@ -23,10 +24,9 @@ export default function PaginaLogin() {
 
         <FormularioLogin />
 
-        <p className="mt-6 text-center text-xs text-white/60">
-          Modo offline disponível no app de campo — seus dados são
-          sincronizados depois.
-        </p>
+        {/* Quem não consegue entrar precisa de um telefone, não de um aviso
+            sobre app de campo. */}
+        <RodapeAjuda tema="escuro" className="mt-6" />
       </div>
     </main>
   );

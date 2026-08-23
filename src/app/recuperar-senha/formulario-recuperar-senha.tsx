@@ -39,13 +39,13 @@ export function FormularioRecuperarSenha() {
       <CardContent className="pt-6">
         {enviado ? (
           <div className="space-y-4 py-2 text-center">
-            <p className="text-sm">
+            <p className="text-base leading-relaxed">
               ✅ Pronto! Se o e-mail estiver cadastrado, você receberá um link
               para definir uma nova senha. Confira também a caixa de spam.
             </p>
             <Link
               href="/login"
-              className="text-sm font-semibold text-primary underline underline-offset-2"
+              className="flex min-h-11 w-full items-center justify-center rounded-lg border border-border px-4 text-base font-bold transition-colors hover:bg-muted"
             >
               Voltar para a entrada
             </Link>
@@ -53,28 +53,36 @@ export function FormularioRecuperarSenha() {
         ) : (
           <form onSubmit={aoEnviar} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
+              <Label htmlFor="email" className="text-base">
+                E-mail
+              </Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
                 autoComplete="email"
-                placeholder="nome@mundonovo.agr.br"
+                placeholder="seuemail@exemplo.com"
                 required
+                className="h-11 text-base md:text-base"
               />
             </div>
             {erro ? (
-              <p role="alert" className="text-sm font-medium text-destructive">
+              <p role="alert" className="text-base font-medium text-destructive">
                 {erro}
               </p>
             ) : null}
-            <Button type="submit" className="w-full" disabled={enviando}>
+            <Button
+              type="submit"
+              size="lg"
+              className="h-11 w-full text-base"
+              disabled={enviando}
+            >
               {enviando ? "Enviando…" : "Enviar link de recuperação"}
             </Button>
             <p className="text-center">
               <Link
                 href="/login"
-                className="text-sm font-semibold text-muted-foreground hover:text-foreground"
+                className="inline-flex min-h-11 items-center px-3 text-base font-semibold text-muted-foreground hover:text-foreground"
               >
                 Voltar para a entrada
               </Link>
