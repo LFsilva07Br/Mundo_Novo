@@ -141,11 +141,18 @@ function paraResumo(linha: LinhaVisitaResumo): VisitaResumo {
   };
 }
 
-/** Visitas mais recentes primeiro, com o resumo agregado das respostas. */
-export async function listarVisitas(): Promise<VisitaResumo[]> {
+/**
+ * Visitas mais recentes primeiro, com o resumo agregado das respostas.
+ * Com `clienteId`, devolve apenas as visitas daquele cliente.
+ */
+export async function listarVisitas(
+  clienteId?: string,
+): Promise<VisitaResumo[]> {
   const supabase = await createClient();
   if (!supabase) {
-    return VISITAS_DEMO.map((v) =>
+    return VISITAS_DEMO.filter(
+      (v) => !clienteId || v.clienteId === clienteId,
+    ).map((v) =>
       paraResumo({
         id: v.id,
         titulo: v.titulo,
@@ -162,15 +169,19 @@ export async function listarVisitas(): Promise<VisitaResumo[]> {
     ).sort((a, b) => b.iniciadaEm.localeCompare(a.iniciadaEm));
   }
 
-  const { data, error } = await supabase
+  let consulta = supabase
     .from("visitas")
     .select(
       `id, titulo, origem, status, iniciada_em, concluida_em,
        clientes ( nome ),
        checklist_versoes ( checklist_itens ( id ) ),
        visita_respostas ( resposta )`,
-    )
-    .order("iniciada_em", { ascending: false });
+    );
+  if (clienteId) consulta = consulta.eq("cliente_id", clienteId);
+
+  const { data, error } = await consulta.order("iniciada_em", {
+    ascending: false,
+  });
   if (error) throw new Error(`Erro ao listar visitas: ${error.message}`);
 
   return (data as unknown as LinhaVisitaResumo[]).map(paraResumo);

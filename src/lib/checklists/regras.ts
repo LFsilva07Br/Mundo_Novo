@@ -79,3 +79,19 @@ export function calcularConformidade(
   ).length;
   return Math.round((conformes / consideradas.length) * 100);
 }
+
+/**
+ * Conformidade do cliente = média arredondada das conformidades das visitas
+ * concluídas (visitas sem base de cálculo — conformidade null — são
+ * ignoradas). Retorna null quando nenhuma visita tem conformidade.
+ */
+export function calcularConformidadeCliente(
+  visitas: { conformidade: number | null }[],
+): number | null {
+  const validas = visitas
+    .map((v) => v.conformidade)
+    .filter((c): c is number => typeof c === "number");
+  if (validas.length === 0) return null;
+
+  return Math.round(validas.reduce((soma, c) => soma + c, 0) / validas.length);
+}
