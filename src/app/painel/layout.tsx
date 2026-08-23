@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BarraLateral, BarraLateralMovel } from "@/components/barra-lateral";
+import { BuscaClientes } from "@/components/busca-clientes";
 import { Toaster } from "@/components/ui/sonner";
 import { perfilEhAuditor } from "@/lib/auditor/sessao";
+import { listarClientes } from "@/lib/carteira/consultas";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { createClient, getUsuarioAtual } from "@/lib/supabase/server";
 
@@ -39,11 +41,22 @@ export default async function LayoutPainel({
     );
   }
 
+  // Busca global de cliente (Ctrl/Cmd+K) e nome do cliente ativo: fica no
+  // layout para estar disponível em qualquer tela do painel.
+  const clientesBusca = (await listarClientes()).map((cliente) => ({
+    id: cliente.id,
+    nome: cliente.nome,
+    produtor: cliente.produtor,
+    cidade: cliente.cidade,
+    uf: cliente.uf,
+  }));
+
   return (
     <div className="flex min-h-dvh flex-1">
       <BarraLateral emailUsuario={usuario?.email ?? null} />
       <div className="flex min-w-0 flex-1 flex-col">
         <BarraLateralMovel emailUsuario={usuario?.email ?? null} />
+        <BuscaClientes clientes={clientesBusca} />
         {modoAuditor ? (
           <div className="sticky top-0 z-40 border-b border-warning/40 bg-warning/15 px-6 py-2 text-center text-xs font-bold text-warning print:hidden">
             Modo auditor — somente leitura. Você pode consultar todos os

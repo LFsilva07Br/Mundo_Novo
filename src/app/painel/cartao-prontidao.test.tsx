@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { CartaoProntidao } from "./cartao-prontidao";
+import { CartaoProntidao, destinoDaPendencia } from "./cartao-prontidao";
 import PaginaDashboard from "./page";
 import type { ProntidaoCliente } from "@/lib/prontidao/consultas";
 
@@ -36,6 +36,25 @@ describe("CartaoProntidao", () => {
     expect(screen.getByText("1 com pendências")).toBeInTheDocument();
   });
 
+  it("diz QUAIS fazendas estão prontas, com a nota, e leva à ficha", () => {
+    render(<CartaoProntidao carteira={CARTEIRA} />);
+
+    expect(
+      screen.getByText("Prontas para a auditoria externa"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Fazenda Exemplo A" }),
+    ).toHaveAttribute("href", "/painel/clientes/cliente-a");
+    expect(screen.getByText("nota 100")).toBeInTheDocument();
+  });
+
+  it("esconde o bloco de prontas quando não há nenhuma", () => {
+    render(<CartaoProntidao carteira={[CARTEIRA[1]]} />);
+    expect(
+      screen.queryByText("Prontas para a auditoria externa"),
+    ).not.toBeInTheDocument();
+  });
+
   it("lista o cliente não pronto com as 2 principais pendências", () => {
     render(<CartaoProntidao carteira={CARTEIRA} />);
 
@@ -52,8 +71,19 @@ describe("CartaoProntidao", () => {
     expect(
       screen.getByText(/\+ 1 outra\(s\) pendência\(s\)/),
     ).toBeInTheDocument();
-    // Cliente pronto não entra na lista de pendências.
-    expect(screen.queryByText("Fazenda Exemplo A")).not.toBeInTheDocument();
+  });
+
+  it("torna cada pendência clicável para a tela que a resolve", () => {
+    render(<CartaoProntidao carteira={CARTEIRA} />);
+
+    expect(
+      screen.getByRole("link", { name: /CAPA MAIOR em aberto/ }),
+    ).toHaveAttribute("href", "/painel/capas");
+    expect(
+      screen.getByRole("link", {
+        name: /Certificação Rainforest Alliance vencida/,
+      }),
+    ).toHaveAttribute("href", "/painel/clientes/cliente-b");
   });
 
   it("aparece no dashboard com os dados de demonstração", async () => {
@@ -61,5 +91,49 @@ describe("CartaoProntidao", () => {
 
     expect(screen.getByText("Prontidão para auditoria")).toBeInTheDocument();
     expect(screen.getByText(/com pendências/)).toBeInTheDocument();
+  });
+});
+
+describe("destinoDaPendencia", () => {
+  it("manda CAPA para a tela de CAPAs", () => {
+    expect(destinoDaPendencia("CAPA CRÍTICA em aberto", "cedro").href).toBe(
+      "/painel/capas",
+    );
+  });
+
+  it("manda treinamento para Social já com o cliente selecionado", () => {
+    expect(
+      destinoDaPendencia("Treinamento vencido: NR-31", "sao jose").href,
+    ).toBe("/painel/social?cliente=sao%20jose");
+  });
+
+  it("manda documento de imóvel para Imóveis com o cliente selecionado", () => {
+    expect(
+      destinoDaPendencia("Documento do imóvel vencido: Outorga", "cedro").href,
+    ).toBe("/painel/imoveis?cliente=cedro");
+  });
+
+  it("manda a falta de auditoria interna para Visitas", () => {
+    expect(
+      destinoDaPendencia(
+        "Sem auditoria interna concluída nos últimos 12 meses",
+        "cedro",
+      ).href,
+    ).toBe("/painel/visitas");
+  });
+
+  it("manda certificado (vencido, a vencer ou suspenso) para a ficha", () => {
+    expect(
+      destinoDaPendencia("Certificação 4C vencida em 01/01/2026", "cedro").href,
+    ).toBe("/painel/clientes/cedro");
+    expect(
+      destinoDaPendencia("Certificação 4C suspensa", "cedro").href,
+    ).toBe("/painel/clientes/cedro");
+  });
+
+  it("descreve a ação para leitor de tela", () => {
+    expect(destinoDaPendencia("CAPA menor em aberto", "cedro").acao).toBe(
+      "Abrir CAPAs",
+    );
   });
 });

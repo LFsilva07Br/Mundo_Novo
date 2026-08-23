@@ -21,13 +21,20 @@ import {
 } from "@/components/ui/table";
 import { listarClientes } from "@/lib/carteira/consultas";
 import { CAPAS_DEMO } from "@/lib/certificacao/dados-demo";
-import { ROTULO_NORMA } from "@/lib/carteira/tipos";
+import { ROTULO_NORMA, type Norma } from "@/lib/carteira/tipos";
 import { avaliarCarteira } from "@/lib/prontidao/consultas";
-import { diasAte, statusVencimento } from "@/lib/vencimentos";
 import { CartaoProntidao } from "./cartao-prontidao";
+import { resumoCarteira, resumoNormas, resumoVencimentos } from "./indicadores";
 
 export const metadata: Metadata = {
   title: "Dashboard",
+};
+
+/** Siglas curtas: o detalhe do cartão tem espaço para uma linha só. */
+const SIGLA_NORMA: Record<Norma, string> = {
+  ra: "RA",
+  quatro_c: "4C",
+  organico: "Orgânico",
 };
 
 export default async function PaginaDashboard() {
@@ -47,14 +54,8 @@ export default async function PaginaDashboard() {
         new Date(b.cert.venceEm!).getTime(),
     );
 
-  const vencendo90 = comVencimento.filter(({ cert }) => {
-    const dias = diasAte(new Date(`${cert.venceEm}T12:00:00`));
-    return dias >= 0 && dias <= 90;
-  }).length;
-  const vencidos = comVencimento.filter(
-    ({ cert }) =>
-      statusVencimento(new Date(`${cert.venceEm}T12:00:00`)) === "vencido",
-  ).length;
+  const vencimentos = resumoVencimentos(comVencimento.map(({ cert }) => cert));
+  const carteira = resumoCarteira(clientes);
 
   const conformidades = clientes
     .map((c) => c.conformidade)
@@ -64,12 +65,56 @@ export default async function PaginaDashboard() {
   );
   const capasAbertas = CAPAS_DEMO.filter((c) => c.status !== "Fechada").length;
 
-  const indicadores = [
-    { rotulo: "Clientes ativos", valor: String(clientes.length), detalhe: "3 grupos + cliente direto" },
-    { rotulo: "Certificações", valor: String(certificacoes.length), detalhe: "RA · 4C · Orgânico" },
-    { rotulo: "Vencendo em 90 dias", valor: String(vencendo90), detalhe: vencidos > 0 ? `${vencidos} já vencida(s)` : "nenhuma vencida", alerta: vencendo90 > 0 || vencidos > 0 },
-    { rotulo: "CAPAs abertas", valor: String(capasAbertas), detalhe: "planos de ação ativos" },
-    { rotulo: "Conformidade média", valor: `${conformidadeMedia}%`, detalhe: "média da carteira", ok: true },
+  const indicadores: {
+    rotulo: string;
+    valor: string;
+    detalhe: string;
+    tom?: "destrutivo" | "atencao" | "ok";
+  }[] = [
+    {
+      rotulo: "Clientes ativos",
+      valor: String(carteira.clientes),
+      detalhe: carteira.detalhe,
+    },
+    {
+      rotulo: "Certificações",
+      valor: String(certificacoes.length),
+      detalhe: resumoNormas(
+        certificacoes.map(({ cert }) => cert),
+        SIGLA_NORMA,
+      ),
+    },
+    // Vencido e a vencer são urgências diferentes: juntar os dois num
+    // cartão só fazia o painel mostrar menos trabalho do que existe.
+    {
+      rotulo: "Certificações vencidas",
+      valor: String(vencimentos.vencidas),
+      detalhe:
+        vencimentos.vencidas > 0
+          ? "renovação em atraso — prioridade máxima"
+          : "nenhuma em atraso",
+      tom: vencimentos.vencidas > 0 ? "destrutivo" : "ok",
+    },
+    {
+      rotulo: "Vencem em 90 dias",
+      valor: String(vencimentos.vencendo90),
+      detalhe:
+        vencimentos.vencendo90 > 0
+          ? "planejar a renovação"
+          : "nada no radar de 90 dias",
+      tom: vencimentos.vencendo90 > 0 ? "atencao" : "ok",
+    },
+    {
+      rotulo: "CAPAs abertas",
+      valor: String(capasAbertas),
+      detalhe: "planos de ação ativos",
+    },
+    {
+      rotulo: "Conformidade média",
+      valor: `${conformidadeMedia}%`,
+      detalhe: "média da carteira",
+      tom: "ok",
+    },
   ];
 
   return (
@@ -91,14 +136,20 @@ export default async function PaginaDashboard() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         {indicadores.map((kpi) => (
           <Card key={kpi.rotulo}>
             <CardContent className="py-4">
               <p
-                className={`text-2xl font-extrabold ${
-                  kpi.alerta ? "text-warning" : kpi.ok ? "text-success" : ""
-                }`}
+                className={
+                  kpi.tom === "destrutivo"
+                    ? "text-2xl font-extrabold text-destructive"
+                    : kpi.tom === "atencao"
+                      ? "text-2xl font-extrabold text-warning"
+                      : kpi.tom === "ok"
+                        ? "text-2xl font-extrabold text-success"
+                        : "text-2xl font-extrabold"
+                }
               >
                 {kpi.valor}
               </p>
@@ -189,9 +240,7 @@ export default async function PaginaDashboard() {
         <Link href="/painel/social" className="group">
           <Card className="h-full transition-colors group-hover:border-primary/40">
             <CardContent className="py-4">
-              <p className="flex items-center gap-2 font-bold">
-                Social & Colaboradores <Badge variant="secondary">novo</Badge>
-              </p>
+              <p className="font-bold">Social & Colaboradores</p>
               <p className="text-sm text-muted-foreground">
                 Trabalhadores, treinamentos e exames
               </p>
