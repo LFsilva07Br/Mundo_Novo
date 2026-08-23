@@ -16,11 +16,17 @@ export default async function LayoutPainel({
     const supabase = await createClient();
     const { data: perfil } = (await supabase!
       .from("perfis")
-      .select("deve_trocar_senha")
+      .select("deve_trocar_senha, cliente_id")
       .eq("id", usuario.id)
-      .maybeSingle()) as { data: { deve_trocar_senha: boolean } | null };
+      .maybeSingle()) as {
+      data: { deve_trocar_senha: boolean; cliente_id: string | null } | null;
+    };
     if (perfil?.deve_trocar_senha) {
       redirect("/definir-senha?obrigatoria=1");
+    }
+    // Perfil vinculado a um cliente é PRODUTOR — o lugar dele é o portal.
+    if (perfil?.cliente_id) {
+      redirect("/portal");
     }
   }
 
