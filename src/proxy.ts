@@ -36,7 +36,9 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const rotaProtegida = request.nextUrl.pathname.startsWith("/painel");
+  const rotaProtegida =
+    request.nextUrl.pathname.startsWith("/painel") ||
+    request.nextUrl.pathname.startsWith("/campo");
   const rotaLogin = request.nextUrl.pathname.startsWith("/login");
 
   if (!user && rotaProtegida) {
