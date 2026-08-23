@@ -20,14 +20,19 @@ import {
 import { listarClientes } from "@/lib/carteira/consultas";
 import { CAPAS_DEMO } from "@/lib/certificacao/dados-demo";
 import { ROTULO_NORMA } from "@/lib/carteira/tipos";
+import { avaliarCarteira } from "@/lib/prontidao/consultas";
 import { diasAte, statusVencimento } from "@/lib/vencimentos";
+import { CartaoProntidao } from "./cartao-prontidao";
 
 export const metadata: Metadata = {
   title: "Dashboard",
 };
 
 export default async function PaginaDashboard() {
-  const clientes = await listarClientes();
+  const [clientes, prontidao] = await Promise.all([
+    listarClientes(),
+    avaliarCarteira(),
+  ]);
 
   const certificacoes = clientes.flatMap((cliente) =>
     cliente.certificacoes.map((cert) => ({ cliente, cert })),
@@ -101,6 +106,8 @@ export default async function PaginaDashboard() {
           </Card>
         ))}
       </div>
+
+      <CartaoProntidao carteira={prontidao} />
 
       <Card>
         <CardHeader>
