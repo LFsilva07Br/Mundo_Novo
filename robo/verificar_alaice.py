@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
-Robô ALAICE — Mundo Novo Café
-Verifica diariamente os vencimentos dos certificados no site da
-certificadora (alaice.org.br). O MyRA/RACP não expõe API pública;
-quando a consulta automática não é possível, a execução é registrada
-como "verificação assistida" e o gestor confere manualmente.
+Robô de verificação de certificados — Mundo Novo Café
+Verifica diariamente os certificados contra o diretório público da
+Rainforest Alliance (painel Power BI — sem API pública, conforme
+levantamento de 23/08/2026; o domínio alaice.org.br não existe).
+A execução roda em modo "verificação assistida": confirma que o
+diretório oficial está no ar e entrega ao gestor o link direto para
+conferência, registrando tudo no log de execuções.
 
 Requer as variáveis de ambiente:
   SUPABASE_URL                (ex.: https://xxxx.supabase.co)
@@ -20,7 +22,11 @@ import urllib.request
 
 SUPABASE_URL = os.environ["SUPABASE_URL"].rstrip("/")
 SERVICE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
-FONTE = "https://alaice.org.br"
+FONTE = "https://www.rainforest-alliance.org/business/sustainable-farming/farm-certification/certificate-search-and-public-summaries/"
+PAINEL_PUBLICO = (
+    "https://app.powerbi.com/view?r=eyJrIjoiMmFjMjk0YzAtZTBlNy00NWNiLTk2M2YtZDJjY2NlNWFjOGM1"
+    "IiwidCI6ImFkN2QzYTVkLWNkYTQtNDkyMi05MDkxLTdmOTk5ODM3MmEzYyIsImMiOjN9"
+)
 
 CABECALHOS = {
     "apikey": SERVICE_KEY,
@@ -53,7 +59,7 @@ def site_alaice_acessivel() -> bool:
 
 def principal() -> int:
     inicio = time.time()
-    linhas_log = [f"consultando ALAICE — fonte {FONTE}"]
+    linhas_log = [f"verificando diretório público da Rainforest Alliance — {FONTE}"]
 
     certificacoes = api(
         "GET",
@@ -69,8 +75,9 @@ def principal() -> int:
         # O site não expõe consulta estruturada por certificado (sem API pública).
         # Confirmamos disponibilidade da fonte e carimbamos a verificação;
         # divergências são apontadas pela verificação assistida do gestor.
-        status = "sucesso"
-        linhas_log.append("site acessível — datas da base confirmadas (verificação assistida para divergências)")
+        status = "verificacao_assistida"
+        linhas_log.append("diretório oficial no ar — conferência assistida disponível")
+        linhas_log.append(f"painel público para conferência: {PAINEL_PUBLICO}")
         agora = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         api(
             "PATCH",
@@ -79,8 +86,8 @@ def principal() -> int:
             prefer="return=minimal",
         )
     else:
-        status = "verificacao_assistida"
-        linhas_log.append("site indisponível — verificação assistida necessária hoje")
+        status = "falha"
+        linhas_log.append("diretório oficial indisponível — tentar novamente na próxima execução")
 
     duracao = round(time.time() - inicio, 2)
     linhas_log.append(f"concluído em {duracao}s")

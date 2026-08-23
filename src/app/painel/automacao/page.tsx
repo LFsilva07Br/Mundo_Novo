@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { Bot, CalendarClock, Zap } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { CalendarClock, Zap } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -13,6 +12,7 @@ import { listarClientes } from "@/lib/carteira/consultas";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { DISPAROS_PADRAO_DIAS } from "@/lib/vencimentos";
 import { cn } from "@/lib/utils";
+import { CartaoRobo } from "./cartao-robo";
 import { OverridesClientes } from "./overrides-clientes";
 
 export const metadata: Metadata = {
@@ -152,25 +152,7 @@ export default async function PaginaAutomacao() {
         modoDemo={modoDemo}
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bot className="size-4 text-info" />
-            Robô da certificadora (ALAICE)
-          </CardTitle>
-          <CardDescription>
-            O MyRA/RACP não expõe API pública — um robô consultará diariamente
-            às 06:00 o site da certificadora para conferir as datas de
-            vencimento, atualizando a base e notificando o gestor em caso de
-            divergência (verificação assistida como alternativa).
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Badge variant="outline">
-            Estrutura pronta — ativação na Fase 8, após conexão do banco
-          </Badge>
-        </CardContent>
-      </Card>
+      <CartaoRobo />
     </div>
   );
 }

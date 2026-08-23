@@ -22,7 +22,7 @@ describe("DialogoNovoTrabalhador", () => {
       screen.getByRole("button", { name: /Novo trabalhador/ }),
     );
 
-    expect(screen.getByLabelText("Nome completo")).toBeInTheDocument();
+    expect(await screen.findByLabelText("Nome completo")).toBeInTheDocument();
     expect(screen.getByLabelText("Vínculo")).toBeInTheDocument();
     expect(screen.getByLabelText("Função")).toBeInTheDocument();
     expect(screen.getByLabelText("CBO")).toBeInTheDocument();
@@ -46,7 +46,7 @@ describe("DialogoNovoTrabalhador", () => {
       screen.getByRole("button", { name: /Novo trabalhador/ }),
     );
 
-    const vinculo = screen.getByLabelText("Vínculo");
+    const vinculo = await screen.findByLabelText("Vínculo");
     expect(vinculo).toHaveValue("fixo");
     expect(
       screen.getByRole("option", { name: "Temporário" }),
