@@ -9,13 +9,13 @@ vi.mock("@/lib/carteira/acoes", () => ({
 }));
 
 const CONTATOS: ContatoCliente[] = [
-  { nome: "Silvio Dutra", area: "proprietario" },
+  { nome: "Silvio Dutra", area: "proprietario", telefone: "(35) 99999-0001" },
   { nome: "Tâmara Isa da Silva", area: "ambiental" },
 ];
 
 describe("ContatosCliente", () => {
   it("lista os contatos com a área e o botão de remover", () => {
-    render(<ContatosCliente clienteId="alto-da-serra" contatos={CONTATOS} />);
+    render(<ContatosCliente clienteId="alto-da-serra" clienteNome="Fazenda Alto da Serra" contatos={CONTATOS} />);
 
     const tabela = within(screen.getByRole("table"));
     expect(tabela.getByText("Silvio Dutra")).toBeInTheDocument();
@@ -26,8 +26,31 @@ describe("ContatosCliente", () => {
     ).toBeEnabled();
   });
 
+  it("mostra o link do WhatsApp apenas para contatos com telefone", () => {
+    render(
+      <ContatosCliente
+        clienteId="alto-da-serra"
+        clienteNome="Fazenda Alto da Serra"
+        contatos={CONTATOS}
+      />,
+    );
+
+    const link = screen.getByRole("link", {
+      name: "Chamar Silvio Dutra no WhatsApp",
+    });
+    expect(link).toHaveAttribute(
+      "href",
+      expect.stringContaining("https://wa.me/5535999990001?text="),
+    );
+    expect(
+      screen.queryByRole("link", {
+        name: "Chamar Tâmara Isa da Silva no WhatsApp",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
   it("exibe o formulário de novo contato com todas as áreas", () => {
-    render(<ContatosCliente clienteId="alto-da-serra" contatos={CONTATOS} />);
+    render(<ContatosCliente clienteId="alto-da-serra" clienteNome="Fazenda Alto da Serra" contatos={CONTATOS} />);
 
     expect(screen.getByLabelText("Nome")).toBeRequired();
     expect(screen.getByLabelText("Área")).toBeInTheDocument();
@@ -42,7 +65,7 @@ describe("ContatosCliente", () => {
   });
 
   it("sem contatos, convida a cadastrar o primeiro", () => {
-    render(<ContatosCliente clienteId="alto-da-serra" contatos={[]} />);
+    render(<ContatosCliente clienteId="alto-da-serra" clienteNome="Fazenda Alto da Serra" contatos={[]} />);
     expect(
       screen.getByText(/nenhum contato cadastrado ainda/i),
     ).toBeInTheDocument();

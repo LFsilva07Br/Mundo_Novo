@@ -63,3 +63,42 @@ self.addEventListener("fetch", (evento) => {
       }),
   );
 });
+
+/*
+ * Notificações — push de servidor (estrutura pronta) e clique.
+ * O payload esperado é JSON { titulo, corpo } — é o formato que o servidor
+ * enviará via lib `web-push` quando as chaves VAPID forem configuradas
+ * (ver src/lib/notificacoes/acoes.ts). Enquanto isso, as notificações
+ * LOCAIS usam registration.showNotification diretamente do app.
+ */
+self.addEventListener("push", (evento) => {
+  let dados = { titulo: "Mundo Novo Café", corpo: "Você tem novidades no app." };
+  try {
+    if (evento.data) dados = { ...dados, ...evento.data.json() };
+  } catch {
+    // payload fora do formato — mantém o texto padrão
+  }
+  evento.waitUntil(
+    self.registration.showNotification(dados.titulo, {
+      body: dados.corpo,
+      icon: "/icone.svg",
+      badge: "/icone.svg",
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (evento) => {
+  evento.notification.close();
+  evento.waitUntil(
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((janelas) => {
+        const aberta = janelas.find((j) => "focus" in j);
+        if (aberta) {
+          aberta.focus();
+          return aberta.navigate ? aberta.navigate("/campo/alertas") : undefined;
+        }
+        return self.clients.openWindow("/campo/alertas");
+      }),
+  );
+});

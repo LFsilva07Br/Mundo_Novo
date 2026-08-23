@@ -15,7 +15,12 @@ export default async function PaginaCapas() {
   return (
     <VisaoCapas
       capas={capas}
-      clientes={clientes.map((c) => ({ id: c.id, nome: c.nome }))}
+      clientes={clientes.map((c) => ({
+        id: c.id,
+        nome: c.nome,
+        // Telefone para a cobrança por WhatsApp: primeiro contato que tiver.
+        telefone: c.contatos?.find((contato) => contato.telefone)?.telefone,
+      }))}
       modoDemo={modoDemo}
     />
   );

@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronRight,
+  MessageCircle,
   Plus,
   ShieldCheck,
 } from "lucide-react";
@@ -47,6 +48,7 @@ import { calcularRankingGaps, podeFecharCapa } from "@/lib/certificacao/regras";
 import { ITENS_CHECKLIST_RA } from "@/lib/certificacao/dados-demo";
 import { formatarData } from "@/lib/vencimentos";
 import { cn } from "@/lib/utils";
+import { linkWhatsApp, mensagemCobrancaCapa } from "@/lib/whatsapp";
 import { SecaoEvidencias } from "./secao-evidencias";
 
 const ROTULO_SEVERIDADE: Record<Capa["severidade"], string> = {
@@ -68,7 +70,7 @@ const ROTULO_STATUS: Record<Capa["status"], string> = {
   fechada: "✓ Fechada",
 };
 
-type ClienteOpcao = { id: string; nome: string };
+type ClienteOpcao = { id: string; nome: string; telefone?: string };
 
 type Props = {
   capas: Capa[];
@@ -301,6 +303,9 @@ export function VisaoCapas({ capas, clientes, modoDemo }: Props) {
                     pendentes={pendentes}
                     ocupado={pendente}
                     modoDemo={modoDemo}
+                    telefone={
+                      clientes.find((c) => c.nome === capa.cliente)?.telefone
+                    }
                     aoAlternar={() => alternarExpansao(capa.id)}
                     aoMarcarAcao={(acaoId, concluida) =>
                       marcarAcao(capa.id, acaoId, concluida)
@@ -358,6 +363,8 @@ type PropsLinhas = {
   pendentes: number;
   ocupado: boolean;
   modoDemo: boolean;
+  /** Telefone do contato do cliente — habilita a cobrança por WhatsApp. */
+  telefone?: string;
   aoAlternar: () => void;
   aoMarcarAcao: (acaoId: string, concluida: boolean) => void;
   aoFechar: () => void;
@@ -369,10 +376,22 @@ function CapaLinhas({
   pendentes,
   ocupado,
   modoDemo,
+  telefone,
   aoAlternar,
   aoMarcarAcao,
   aoFechar,
 }: PropsLinhas) {
+  const linkCobranca =
+    capa.status !== "fechada" && telefone
+      ? linkWhatsApp(
+          telefone,
+          mensagemCobrancaCapa({
+            cliente: capa.cliente,
+            descricao: capa.descricao,
+            prazo: capa.prazo,
+          }),
+        )
+      : null;
   return (
     <>
       <TableRow className="cursor-pointer" onClick={aoAlternar}>
@@ -473,15 +492,35 @@ function CapaLinhas({
                 fechada={capa.status === "fechada"}
                 modoDemo={modoDemo}
               />
-              {capa.status !== "fechada" ? (
-                <Button
-                  size="sm"
-                  disabled={pendentes > 0 || ocupado}
-                  onClick={aoFechar}
-                >
-                  Fechar CAPA
-                </Button>
-              ) : null}
+              <div className="flex flex-wrap items-center gap-2">
+                {capa.status !== "fechada" ? (
+                  <Button
+                    size="sm"
+                    disabled={pendentes > 0 || ocupado}
+                    onClick={aoFechar}
+                  >
+                    Fechar CAPA
+                  </Button>
+                ) : null}
+                {linkCobranca ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5"
+                    render={
+                      <a
+                        href={linkCobranca}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(evento) => evento.stopPropagation()}
+                      />
+                    }
+                  >
+                    <MessageCircle className="size-3.5 text-success" />
+                    Cobrar por WhatsApp
+                  </Button>
+                ) : null}
+              </div>
             </div>
           </TableCell>
         </TableRow>

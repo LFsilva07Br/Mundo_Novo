@@ -4,8 +4,22 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /** Ajustes do aparelho: biometria, espaço usado e limpeza manual. */
 
-const { estado } = vi.hoisted(() => ({
+const { estado, notificacoes } = vi.hoisted(() => ({
   estado: { disponivel: true, ativada: false },
+  notificacoes: { permissao: "default" as string },
+}));
+
+vi.mock("@/lib/notificacoes/local", () => ({
+  estadoPermissao: vi.fn(() => notificacoes.permissao),
+  pedirPermissao: vi.fn(async () => {
+    notificacoes.permissao = "granted";
+    return "granted";
+  }),
+  guardarAssinaturaPush: vi.fn(async () => ({
+    ok: false,
+    aviso: "Push de servidor ainda não configurado (sem chave VAPID).",
+  })),
+  notificar: vi.fn(async () => true),
 }));
 
 vi.mock("@/lib/campo/biometria", () => ({
@@ -26,18 +40,20 @@ vi.mock("@/lib/campo/banco-local", () => ({
 }));
 
 vi.mock("sonner", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
+  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
 import { toast } from "sonner";
 import { limparVisitasSincronizadas } from "@/lib/campo/banco-local";
 import { registrarBiometria } from "@/lib/campo/biometria";
+import { notificar, pedirPermissao } from "@/lib/notificacoes/local";
 import PaginaAjustesCampo from "./page";
 
 beforeEach(() => {
   vi.clearAllMocks();
   estado.disponivel = true;
   estado.ativada = false;
+  notificacoes.permissao = "default";
   Object.defineProperty(navigator, "storage", {
     configurable: true,
     value: {
@@ -92,6 +108,35 @@ describe("Ajustes do campo", () => {
     expect(
       screen.queryByRole("button", { name: /Ativar biometria/ }),
     ).not.toBeInTheDocument();
+  });
+
+  it("ativa as notificações e envia a notificação de teste", async () => {
+    render(<PaginaAjustesCampo />);
+
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: /Ativar notificações no aparelho/,
+      }),
+    );
+
+    expect(pedirPermissao).toHaveBeenCalledTimes(1);
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith(
+        "Notificações ativadas neste aparelho!",
+      ),
+    );
+    // Sem chave VAPID configurada, avisa que só as locais estão ativas.
+    expect(toast.info).toHaveBeenCalled();
+
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: /Enviar notificação de teste/,
+      }),
+    );
+    expect(notificar).toHaveBeenCalledWith(
+      expect.stringContaining("teste"),
+      expect.any(String),
+    );
   });
 
   it("limpa as visitas já sincronizadas na hora (retenção zero)", async () => {
