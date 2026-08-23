@@ -1,5 +1,14 @@
 import type { Metadata } from "next";
-import { CalendarClock, RefreshCw, Zap } from "lucide-react";
+import Link from "next/link";
+import {
+  CalendarClock,
+  CalendarRange,
+  ChevronLeft,
+  ChevronRight,
+  List,
+  RefreshCw,
+  Zap,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,130 +18,267 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/server";
-import { formatarData } from "@/lib/vencimentos";
-import { concluirTarefa, executarMotorAgora } from "./acoes";
+import { agendaDaSemana } from "@/lib/agenda/consultas";
+import {
+  chaveDia,
+  dataDeChave,
+  rotuloIntervalo,
+  rotuloMes,
+  segundaDaSemana,
+  somarDias,
+} from "@/lib/agenda/semana";
+import { ROTULO_TIPO_PLANEJAMENTO } from "@/lib/planejamento/tipos";
+import { hasSupabaseEnv } from "@/lib/supabase/env";
+import { cn } from "@/lib/utils";
+import { executarMotorAgora } from "./acoes";
+import { CartaoCompromisso } from "./cartao-compromisso";
+import { GradeSemana } from "./grade-semana";
+import { ListaTarefas } from "./lista-tarefas";
 
 export const metadata: Metadata = {
   title: "Agenda",
 };
 
-type Tarefa = {
-  id: string;
-  titulo: string;
-  detalhe: string | null;
-  origem: "data" | "evento" | "manual";
-  regra: string | null;
-  vence_em: string | null;
-  status: string;
-  clientes: { nome: string } | null;
-};
+type Visao = "semana" | "lista";
 
-const ROTULO_ORIGEM = {
-  data: { texto: "⏱ gatilho por data", classe: "bg-secondary text-secondary-foreground" },
-  evento: { texto: "⚡ gatilho por evento", classe: "bg-warning/10 text-warning" },
-  manual: { texto: "✍️ manual", classe: "bg-muted text-muted-foreground" },
-} as const;
+function primeiro(valor: string | string[] | undefined): string | undefined {
+  return Array.isArray(valor) ? valor[0] : valor;
+}
 
-export default async function PaginaAgenda() {
-  const supabase = await createClient();
+/** Endereço compartilhável: a visão e a semana viajam na URL. */
+function linkAgenda(visao: Visao, segunda: Date): string {
+  return visao === "lista"
+    ? "/painel/agenda?visao=lista"
+    : `/painel/agenda?visao=semana&semana=${chaveDia(segunda)}`;
+}
 
-  let tarefas: Tarefa[] = [];
-  if (supabase) {
-    const { data } = await supabase
-      .from("tarefas")
-      .select("id, titulo, detalhe, origem, regra, vence_em, status, clientes ( nome )")
-      .eq("status", "pendente")
-      .order("vence_em", { ascending: true, nullsFirst: false });
-    tarefas = (data as unknown as Tarefa[]) ?? [];
-  }
+export default async function PaginaAgenda({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const parametros = await searchParams;
+  const visao: Visao = primeiro(parametros.visao) === "lista" ? "lista" : "semana";
+
+  const hoje = new Date();
+  const escolhida = dataDeChave(primeiro(parametros.semana));
+  const segunda = segundaDaSemana(escolhida ?? hoje);
+
+  const agenda = await agendaDaSemana(segunda, hoje);
+  const intervalo = rotuloIntervalo(agenda.segunda);
+  const semanaVazia = agenda.compromissos.length === 0;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto w-full max-w-6xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-xs font-extrabold uppercase tracking-widest text-muted-foreground">
             Motor de gatilhos
           </p>
           <h1 className="text-2xl font-extrabold tracking-tight">Agenda</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
             Toda tarefa nasce de um dos dois motores — por{" "}
             <CalendarClock className="inline size-3.5" /> data ou por{" "}
             <Zap className="inline size-3.5" /> evento — e persiste até ser
-            concluída.
+            concluída. A visão de semana junta essas tarefas às visitas
+            agendadas.
           </p>
         </div>
-        <form action={executarMotorAgora}>
-          <Button variant="outline" size="sm" type="submit" className="gap-2">
-            <RefreshCw className="size-3.5" />
-            Rodar motor agora
-          </Button>
-        </form>
+        <div className="flex flex-wrap items-center gap-2">
+          <AlternadorVisao visao={visao} segunda={agenda.segunda} />
+          <form action={executarMotorAgora}>
+            <Button variant="outline" size="sm" type="submit" className="gap-2">
+              <RefreshCw className="size-3.5" />
+              Rodar motor agora
+            </Button>
+          </form>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            Tarefas pendentes{tarefas.length ? ` (${tarefas.length})` : ""}
-          </CardTitle>
-          <CardDescription>
-            O motor roda automaticamente todos os dias às 06:00 e cruza os
-            vencimentos de certificados, documentos de imóveis, outorgas,
-            treinamentos e CAPAs.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {tarefas.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">
-              {supabase
-                ? "Nenhuma tarefa pendente — use “Rodar motor agora” para varrer os vencimentos."
-                : "Banco não conectado — as tarefas aparecem no ambiente publicado."}
-            </p>
-          ) : (
-            tarefas.map((tarefa) => {
-              const origem = ROTULO_ORIGEM[tarefa.origem] ?? ROTULO_ORIGEM.manual;
-              return (
-                <div
-                  key={tarefa.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="font-bold leading-snug">{tarefa.titulo}</p>
-                    {tarefa.detalhe ? (
-                      <p className="mt-0.5 text-sm text-muted-foreground">
-                        {tarefa.detalhe}
-                      </p>
-                    ) : null}
-                    <p className="mt-1.5 flex flex-wrap items-center gap-2">
-                      <span
-                        className={`rounded-lg px-2 py-0.5 text-[11px] font-bold ${origem.classe}`}
-                      >
-                        {origem.texto}
-                      </span>
-                      {tarefa.clientes?.nome ? (
-                        <Badge variant="outline">{tarefa.clientes.nome}</Badge>
-                      ) : null}
-                      {tarefa.vence_em ? (
-                        <span className="text-xs font-semibold text-muted-foreground">
-                          vencimento{" "}
-                          {formatarData(new Date(`${tarefa.vence_em}T12:00:00`))}
-                        </span>
-                      ) : null}
-                    </p>
-                  </div>
-                  <form
-                    action={concluirTarefa.bind(null, tarefa.id)}
-                  >
-                    <Button size="sm" variant="secondary" type="submit">
-                      Concluir
-                    </Button>
-                  </form>
+      {visao === "lista" ? (
+        <ListaTarefas tarefas={agenda.tarefas} conectado={hasSupabaseEnv()} />
+      ) : (
+        <>
+          <Card>
+            <CardHeader className="gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <CardTitle>Semana de {intervalo}</CardTitle>
+                  <CardDescription>
+                    Tarefas que vencem na semana e visitas iniciadas nela, dia
+                    a dia.
+                  </CardDescription>
                 </div>
-              );
-            })
-          )}
-        </CardContent>
-      </Card>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon-sm"
+                    aria-label="Semana anterior"
+                    render={
+                      <Link
+                        href={linkAgenda("semana", somarDias(agenda.segunda, -7))}
+                      />
+                    }
+                  >
+                    <ChevronLeft className="size-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    render={
+                      <Link href={linkAgenda("semana", segundaDaSemana(hoje))} />
+                    }
+                  >
+                    Hoje
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon-sm"
+                    aria-label="Próxima semana"
+                    render={
+                      <Link
+                        href={linkAgenda("semana", somarDias(agenda.segunda, 7))}
+                      />
+                    }
+                  >
+                    <ChevronRight className="size-4" />
+                  </Button>
+                </div>
+              </div>
+              {semanaVazia ? (
+                <p className="rounded-xl border border-dashed p-3 text-sm font-semibold text-muted-foreground">
+                  Nenhum compromisso nesta semana — navegue para outra semana ou
+                  veja o{" "}
+                  <Link
+                    href="/painel/planejamento"
+                    className="text-primary underline underline-offset-4"
+                  >
+                    planejamento anual
+                  </Link>
+                  .
+                </p>
+              ) : null}
+            </CardHeader>
+            <CardContent>
+              <GradeSemana
+                dias={agenda.dias}
+                compromissos={agenda.compromissos}
+                hoje={hoje}
+                intervalo={intervalo}
+              />
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="text-base">
+                  Sem data definida
+                  {agenda.semData.length ? ` (${agenda.semData.length})` : ""}
+                </CardTitle>
+                <CardDescription>
+                  Tarefas pendentes que ainda não têm prazo — ficam aqui para
+                  não desaparecerem da agenda.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {agenda.semData.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Toda tarefa pendente tem data definida.
+                  </p>
+                ) : (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {agenda.semData.map((tarefa) => (
+                      <CartaoCompromisso key={tarefa.id} compromisso={tarefa} />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">
+                  Previsto para {rotuloMes(agenda.segunda)}
+                </CardTitle>
+                <CardDescription>
+                  Planejamento anual: previsto para o mês, sem dia marcado.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {agenda.previstos.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Nenhuma visita prevista neste mês.
+                  </p>
+                ) : (
+                  agenda.previstos.map((previsto) => (
+                    <div
+                      key={previsto.id}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-2"
+                    >
+                      <div className="min-w-0">
+                        <Link
+                          href={`/painel/clientes/${previsto.clienteId}`}
+                          className="block truncate text-sm font-bold hover:underline"
+                        >
+                          {previsto.clienteNome}
+                        </Link>
+                        <p className="text-xs text-muted-foreground">
+                          {ROTULO_TIPO_PLANEJAMENTO[previsto.tipo]}
+                        </p>
+                      </div>
+                      <Badge
+                        variant={previsto.realizado ? "secondary" : "outline"}
+                      >
+                        {previsto.realizado ? "realizada" : "prevista"}
+                      </Badge>
+                    </div>
+                  ))
+                )}
+                <Link
+                  href="/painel/planejamento"
+                  className="inline-block pt-1 text-xs font-bold text-primary underline underline-offset-4"
+                >
+                  Ver planejamento anual
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Alternador Semana × Lista — a escolha fica na URL, então é compartilhável. */
+function AlternadorVisao({ visao, segunda }: { visao: Visao; segunda: Date }) {
+  const opcoes = [
+    { chave: "semana" as const, rotulo: "Semana", Icone: CalendarRange },
+    { chave: "lista" as const, rotulo: "Lista", Icone: List },
+  ];
+
+  return (
+    <div
+      role="group"
+      aria-label="Visualização da agenda"
+      className="inline-flex items-center gap-0.5 rounded-xl border bg-card p-0.5"
+    >
+      {opcoes.map(({ chave, rotulo, Icone }) => {
+        const ativa = visao === chave;
+        return (
+          <Button
+            key={chave}
+            size="sm"
+            variant={ativa ? "secondary" : "ghost"}
+            aria-current={ativa ? "page" : undefined}
+            className={cn("gap-1.5", ativa && "font-bold")}
+            render={<Link href={linkAgenda(chave, segunda)} />}
+          >
+            <Icone className="size-3.5" />
+            {rotulo}
+          </Button>
+        );
+      })}
     </div>
   );
 }
