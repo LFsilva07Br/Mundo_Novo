@@ -13,11 +13,11 @@ describe("motor de gatilhos por data", () => {
     expect(marcoAtingido(181)).toBeNull();
   });
 
-  it("dispara o menor marco cruzado", () => {
+  it("dispara o marco mais próximo já cruzado", () => {
     expect(marcoAtingido(180)).toBe(180);
-    expect(marcoAtingido(89)).toBe(60);
+    expect(marcoAtingido(89)).toBe(90);
     expect(marcoAtingido(30)).toBe(30);
-    expect(marcoAtingido(10)).toBe(7);
+    expect(marcoAtingido(10)).toBe(15);
     expect(marcoAtingido(0)).toBe(7);
   });
 
@@ -27,7 +27,8 @@ describe("motor de gatilhos por data", () => {
   });
 
   it("aceita régua customizada (override por cliente)", () => {
-    expect(marcoAtingido(12, [15, 7])).toBe(7);
+    expect(marcoAtingido(12, [15, 7])).toBe(15);
+    expect(marcoAtingido(5, [15, 7])).toBe(7);
     expect(marcoAtingido(20, [15, 7])).toBeNull();
   });
 });
