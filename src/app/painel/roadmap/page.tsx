@@ -83,8 +83,8 @@ const fases: Fase[] = [
     nome: "Fase 9 — Expansões (portal, comercialização, mapas)",
     descricao:
       "Portal do produtor, módulo de comercialização com rastreabilidade por lote, mapas das fazendas (KML/CAR) e suíte de testes ponta a ponta.",
-    percentual: 90,
-    observacao: "Falta a suíte de testes ponta a ponta (em execução)",
+    percentual: 95,
+    observacao: "Suíte ponta a ponta em finalização",
   },
   {
     nome: "Fase 10 — Norma expandida (agro & rastreio)",
@@ -96,8 +96,7 @@ const fases: Fase[] = [
     nome: "Fase 11 — Compliance social",
     descricao:
       "Fichas de EPI e atas de treinamento assinadas, sistema avaliar-e-tratar (cap. 5.1), canal digital de queixas e plano de gestão anual com avaliação de risco.",
-    percentual: 50,
-    observacao: "EPIs e atas entregues; avaliar-e-tratar e queixas em construção",
+    percentual: 100,
   },
   {
     nome: "Fase 12 — Comunicação & planejamento",

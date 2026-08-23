@@ -12,8 +12,12 @@ import {
   CalendarRange,
   CircleHelp,
   ClipboardCheck,
+  Download,
   FileSignature,
+  FolderOpen,
   Globe,
+  HeartHandshake,
+  History,
   Landmark,
   LayoutDashboard,
   Leaf,
@@ -48,6 +52,7 @@ const visaoGeral: ItemNavegacao[] = [
   { rotulo: "Visitas", href: "/painel/visitas", icone: ClipboardCheck, disponivel: true },
   { rotulo: "CAPAs", href: "/painel/capas", icone: ShieldCheck, disponivel: true },
   { rotulo: "Social & Colaboradores", href: "/painel/social", icone: UsersRound, disponivel: true },
+  { rotulo: "Compliance social", href: "/painel/compliance", icone: HeartHandshake, disponivel: true },
   { rotulo: "Comercialização", href: "/painel/comercializacao", icone: Coins, disponivel: true },
   { rotulo: "Agroquímicos", href: "/painel/agro", icone: SprayCan, disponivel: true },
   { rotulo: "Auditoria Externa", href: "/painel/auditoria-externa", icone: SearchCheck, disponivel: true },
@@ -62,6 +67,9 @@ const configuracao: ItemNavegacao[] = [
   { rotulo: "Relatórios", href: "/painel/relatorios", icone: BookOpen, disponivel: true },
   { rotulo: "E-mails", href: "/painel/emails", icone: Mail, disponivel: true },
   { rotulo: "Financeiro", href: "/painel/financeiro", icone: Wallet, disponivel: true },
+  { rotulo: "Dossiê do auditor", href: "/painel/dossie", icone: FolderOpen, disponivel: true },
+  { rotulo: "Trilha de auditoria", href: "/painel/trilha", icone: History, disponivel: true },
+  { rotulo: "Exportação de dados", href: "/painel/exportacao", icone: Download, disponivel: true },
 ];
 
 function GrupoNavegacao({
