@@ -30,6 +30,7 @@ import {
   ROTULO_TIPO_DOCUMENTO,
   type StatusDocumento,
 } from "@/lib/carteira/imoveis-esquemas";
+import { listarMapasCliente } from "@/lib/mapas/consultas";
 import { formatarArea } from "@/lib/vencimentos";
 import { cn } from "@/lib/utils";
 import {
@@ -41,6 +42,7 @@ import {
   BotaoNovoImovel,
   BotaoNovoTalhao,
 } from "./dialogos";
+import { SecaoMapas } from "./secao-mapas";
 import { SeletorCliente } from "./seletor-cliente";
 
 export const metadata: Metadata = {
@@ -101,10 +103,11 @@ export default async function PaginaImoveis({
     );
   }
 
-  const [imoveis, panorama, rotulosSafras] = await Promise.all([
+  const [imoveis, panorama, rotulosSafras, mapas] = await Promise.all([
     listarImoveisDoCliente(cliente.id),
     listarTalhoes(cliente.id),
     listarRotulosSafras(),
+    listarMapasCliente(cliente.id),
   ]);
   const { talhoes, comparativo } = panorama;
 
@@ -327,6 +330,8 @@ export default async function PaginaImoveis({
           )}
         </CardContent>
       </Card>
+
+      <SecaoMapas mapas={mapas} imoveis={opcoesImoveis} />
 
       <Card>
         <CardHeader>
