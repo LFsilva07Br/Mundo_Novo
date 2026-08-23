@@ -8,5 +8,9 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],
+    // Máquina compartilhada com agentes/builds em paralelo: folga de tempo
+    // evita falsos negativos por contenção de CPU (os testes são rápidos).
+    testTimeout: 15000,
+    hookTimeout: 15000,
   },
 });

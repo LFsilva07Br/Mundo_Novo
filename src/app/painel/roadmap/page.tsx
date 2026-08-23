@@ -50,9 +50,8 @@ const fases: Fase[] = [
   {
     nome: "Fase 4 — App do consultor (offline)",
     descricao:
-      "PWA instalável com checklist offline, fotos com GPS, assinatura do produtor e fila de sincronização.",
-    percentual: 95,
-    observacao: "Desbloqueio por biometria em implantação",
+      "PWA instalável com checklist offline, fotos com GPS, assinatura do produtor, fila de sincronização e desbloqueio por biometria.",
+    percentual: 100,
   },
   {
     nome: "Fase 5 — Social & Colaboradores",
@@ -84,7 +83,7 @@ const fases: Fase[] = [
     nome: "Fase 9 — Expansões (portal, comercialização, mapas)",
     descricao:
       "Portal do produtor, módulo de comercialização com rastreabilidade por lote, mapas das fazendas (KML/CAR) e suíte de testes ponta a ponta.",
-    percentual: 40,
+    percentual: 70,
     observacao: "Em construção hoje, com agentes em paralelo",
   },
   {
